@@ -1,0 +1,101 @@
+2/15, 5.00p - 10.00p Kaivan, Jorge 5 hours
+Driver Order and Time Length:
+Jorge, 30 minutes
+Kaivan, 30 minutes
+Jorge, 30 minutes
+Kaivan, 30 minutes
+Jorge, 30 minutes
+Kaivan, 30 minutes
+Jorge, 30 minutes
+Kaivan, 30 minutes
+Jorge, 30 minutes
+Kaivan,30 minutes
+
+2/16, 6.00p - 10.00p Kaivan, Jorge 4 hours
+Driver Order and Time Length:
+Jorge, 30 minutes
+Kaivan, 30 minutes
+Jorge, 30 minutes
+Kaivan, 30 minutes
+Jorge, 30 minutes
+Kaivan, 30 minutes
+Jorge, 30 minutes
+Kaivan, 30 minutes
+
+2/17, 6.00p - 10.30p Kaivan, Jorge 4.30 hours
+Driver Order and Time Length:
+Kaivan, 30 minutes
+Jorge, 30 minutes
+Kaivan, 30 minutes
+Jorge, 30 minutes
+Kaivan, 30 minutes
+Jorge, 30 minutes
+Kaivan, 30 minutes
+Jorge, 30 minutes
+Kaivan, 30 minutes
+
+2/18, 6.30p - 9.00p Kaivan, Jorge 3.30 hours
+Driver Order and Time Length:
+Jorge, 30 minutes
+Kaivan, 30 minutes
+Jorge, 30 minutes
+Kaivan, 30 minutes
+Jorge, 30 minutes
+Kaivan, 30 minutes
+Jorge, 30 minutes
+Kaivan, 30 minutes
+
+2/19, 6.00p - 10.30p Kaivan, Jorge 4.00 hours
+Driver Order and Time Length:
+Kaivan, 30 minutes
+Jorge, 30 minutes
+Kaivan, 30 minutes
+Jorge, 30 minutes
+Kaivan, 30 minutes
+Jorge, 30 minutes
+Kaivan, 30 minutes
+Jorge, 30 minutes
+
+2/20, 5.00p - 12.00p Kaivan, Jorge 7.00 hours
+Driver Order and Time Length:
+Jorge, 30 minutes
+Kaivan, 30 minutes
+Jorge, 30 minutes
+Kaivan, 30 minutes
+Jorge, 30 minutes
+Kaivan, 30 minutes
+Jorge, 30 minutes
+Kaivan, 30 minutes
+Jorge, 30 minutes
+Kaivan, 30 minutes
+Jorge, 30 minutes
+Kaivan, 30 minutes
+Jorge, 30 minutes
+Kaivan, 30 minutes
+
+
+2/25, 5.30p - 10.00p Kaivan, Jorge 4.30 hours
+Driver Order and Time Length:
+Jorge, 30 minutes
+Kaivan, 30 minutes
+Jorge, 30 minutes
+Kaivan, 30 minutes
+Jorge, 30 minutes
+Kaivan, 30 minutes
+Jorge, 30 minutes
+Kaivan, 30 minutes
+Jorge, 30 minutes
+
+2/26, 4.30p - 10.00p Kaivan, Jorge 5.30 hours
+Driver Order and Time Length:
+Kaivan, 30 minutes
+Jorge, 30 minutes
+Kaivan, 30 minutes
+Jorge, 30 minutes
+Kaivan, 30 minutes
+Jorge, 30 minutes
+Kaivan, 30 minutes
+Kaivan, 30 minutes
+Jorge, 30 minutes
+Kaivan, 30 minutes
+Jorge, 30 minutes

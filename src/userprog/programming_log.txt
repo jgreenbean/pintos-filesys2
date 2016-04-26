@@ -1,0 +1,126 @@
+2/29 3:00pm-7:30pm Jorge, Charles, Rebecca, and Jasmine, 4 1/2 hours
+Driver Order and Time Length:
+Charles, 30 minutes
+Rebecca, 30 minutes
+Jasmine, 30 minutes
+Jorge,   30 minutes
+Charles, 30 minutes
+Rebecca, 30 minutes
+Jasmine, 30 minutes
+Jorge,   30 minutes
+Charles, 30 minutes
+
+3/1 2:00pm-6:30pm Jorge, Charles, Rebecca, and Jasmine, 4 1/2 hours
+Driver Order and Time Length:
+Jasmine, 30 minutes
+Charles, 30 minutes
+Rebecca, 30 minutes
+Jasmine, 30 minutes
+Jorge,	 30 minutes
+Charles, 30 minutes
+Rebecca, 30 minutes
+Jasmine, 30 minutes
+Jorge,   30 minutes
+
+3/2 3:00pm-7:00pm Jorge, Charles, Rebecca, and Jasmine, 4 hours
+Driver Order and Time Length:
+Rebecca, 30 minutes
+Charles, 30 minutes
+Jasmine, 30 minutes
+Jorge,   30 minutes
+Charles, 30 minutes
+Jasmine, 30 minutes
+Rebecca, 30 minutes
+Jorge,   30 minutes
+
+3/3 3:00pm-8:00pm Jorge, Charles, Rebecca, and Jasmine, 5 hours
+Driver Order and Time Length:
+Charles, 30 minutes
+Rebecca, 30 minutes
+Jorge,   30 minutes
+Jasmine, 30 minutes
+Charles, 30 minutes
+Rebecca, 30 minutes
+Jorge,   30 minutes
+Jasmine, 30 minutes
+Charles, 30 minutes
+Jorge,   30 minutes
+
+3/4 2:30pm-7:00pm Charles, Rebecca, and Jasmine, Jorge  4 1/2 hours
+Driver Order and Time Length:
+Jasmine, 30 minutes
+Charles, 30 minutes
+Rebecca, 30 minutes
+Jasmine, 30 minutes
+Charles, 30 minutes
+Rebecca, 30 minutes
+Jasmine, 30 minutes
+Jorge,   30 minutes
+Charles, 30 minutes
+
+3/7 3:30pm-8:30pm Jorge, Charles, Rebecca, and Jasmine, 4 1/2 hours
+Driver Order and Time Length:
+Rebecca, 30 minutes
+Charles, 30 minutes
+Jasmine, 30 minutes
+Rebecca, 30 minutes
+Jorge,   30 minutes
+Charles, 30 minutes
+Jasmine, 30 minutes
+Rebecca, 30 minutes
+Jorge,   30 minutes
+
+3/8 2:00pm-6:30pm Jorge, Charles, Rebecca, and Jasmine, 4 1/2 hours
+Driver Order and Time Length:
+Charles, 30 minutes
+Rebecca, 30 minutes
+Jasmine, 30 minutes
+Jorge,   30 minutes
+Charles, 30 minutes
+Rebecca, 30 minutes
+Jasmine, 30 minutes
+Jorge,   30 minutes
+Charles, 30 minutes
+
+
+3/9 2:00pm-6:30pm Jorge, Charles, Rebecca, and Jasmine, 4 1/2 hours
+Driver Order and Time Length:
+Charles, 30 minutes
+Rebecca, 30 minutes
+Jasmine, 30 minutes
+Jorge,   30 minutes
+Charles, 30 minutes
+Rebecca, 30 minutes
+Jasmine, 30 minutes
+Jorge,   30 minutes
+Charles, 30 minutes
+
+3/10 3:00pm-7:30pm Jorge, Charles, Rebecca, and Jasmine, 4 1/2 hours
+Driver Order and Time Length:
+Rebecca, 30 minutes
+Jorge,   30 minutes
+Charles, 30 minutes
+Jasmine, 30 minutes
+Rebecca, 30 minutes
+Charles, 30 minutes
+Jorge,   30 minutes
+Jasmine, 30 minutes
+Rebecca, 30 minutes
+
+3/21 3:00pm-6:00pm Jorge, Charles, Rebecca, and Jasmine, 3 hours
+Driver Order and Time Length:
+Rebecca, 30 minutes
+Jorge,   30 minutes
+Charles, 30 minutes
+Jasmine, 30 minutes
+Rebecca, 30 minutes
+Charles, 30 minutes
+
+3/22 3:00pm-6:00pm Jorge, Charles, Rebecca, and Jasmine, 3 hours
+Driver Order and Time Length:
+Charles, 30 minutes
+Jorge,   30 minutes
+Jasmine, 30 minutes
+Jorge,   30 minutes
+Rebecca, 30 minutes
+Jasmine, 30 minutes
