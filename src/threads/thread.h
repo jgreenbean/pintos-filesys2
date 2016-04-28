@@ -8,6 +8,7 @@
 #include "userprog/syscall.h"
 #include "filesys/file.h"
 #include "filesys/inode.h"
+#include "filesys/directory.h"
 
 /* States in a thread's life cycle. */
 enum thread_status
@@ -88,6 +89,24 @@ struct zombie {
   struct list_elem z_elem;    /* Places the zombie in the parent's zombie list */
 };
 
+// /* In-memory inode. */
+// struct inode 
+// {
+//   struct list_elem elem;              /* Element in inode list. */
+//   block_sector_t sector;              /* Sector number of disk location. */
+//   int open_cnt;                        Number of openers.
+//   bool removed;                       /* True if deleted, false otherwise. */
+//   int deny_write_cnt;                 /* 0: writes ok, >0: deny writes. */
+//   struct inode_disk data;             /* Inode content. */
+// };
+
+/* A directory. */
+// struct dir;
+// {
+//   struct inode *inode;                /* Backing store. */
+//   off_t pos;                          /* Current position. */
+// };
+
 /* An open file. */
 struct file
 {
@@ -99,6 +118,7 @@ struct file
 /* An open file with its file descriptor. */
 struct open_file {
   struct file* f;             /* The open file */
+  struct dir* d;
   int fd;                     /* The file descriptor for file f */
   struct list_elem file_elem; /* Places the open_file in a thread's open_files list */
 };
@@ -141,6 +161,8 @@ struct thread
     struct list zombies;                /*Dead children*/
     int fd_cnt;                         /*File descriptor counter*/
     struct list open_files;             /*List of all files opened by this thread*/
+    char* cur_dir;                      /*Each process has its own current directory*/
+    // bool new_dir_flag;                  /*If newest directory entry is directory*/
 
     /* For child threads */
     struct thread *parent_process;      /*The parent process that created this thread.*/
@@ -165,6 +187,7 @@ struct thread
 extern bool thread_mlfqs;
 
 void thread_init (void);
+void root_init (void);
 void thread_start (void);
 
 void thread_tick (void);

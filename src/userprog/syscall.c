@@ -15,7 +15,9 @@
 #include "userprog/process.h"
 #include "devices/input.h"
 #include "threads/pte.h"
-
+#include "filesys/inode.h"
+#include "filesys/free-map.h"
+#include "filesys/directory.h"
 
 static void syscall_handler (struct intr_frame *);
 
@@ -33,6 +35,7 @@ unsigned tell (int fd);
 void close (int fd);
 void valid_pointer(const void *pointer);
 bool is_valid(const void *pointer);
+bool mkdir(const char *dir);
 
 // Lock variable
 static struct lock file_lock;
@@ -93,6 +96,7 @@ syscall_handler (struct intr_frame *f)
   const char *write_buffer;
   unsigned position;
   int syscall;
+  const char* dir;
 
   valid_pointer(f->esp);
   syscall = *(int *)(f->esp);
@@ -186,6 +190,11 @@ syscall_handler (struct intr_frame *f)
   		fd = *(int *)(f->esp + 4);
   		close(fd);
   		break;
+    case(SYS_MKDIR):
+      valid_pointer(f->esp + 4);
+      dir = *(char **)(f->esp + 4);
+      f->eax = mkdir(dir);
+      break;
   	default:
   		printf ("system call! %d \n", syscall);
   		thread_exit ();
@@ -289,12 +298,9 @@ void exit (int status) {
 
 pid_t exec (const char *file) {
   /*Jasmine Drove here*/
-
   valid_pointer(file);  
   process_execute(file);
   if(thread_current()->success) {
-  //printf("exec. thread: %d. child: %d\n", thread_current()->tid, thread_current()->child_pid);
-
     return thread_current()->child_pid;
   }
   return PID_ERROR;
@@ -542,4 +548,66 @@ void close (int fd) {
     exit(-1);
   }
   lock_release(&file_lock);
+}
+
+bool mkdir(const char *dir) {
+  char *dir_cpy, *cur_cpy, *token, *save_ptr;
+  block_sector_t dir_sector;
+  struct inode* child_inode;
+  struct inode* new_inode;
+  struct dir* parent_dir;
+  struct dir* new_dir;
+
+  valid_pointer(dir);
+  // thread_current()->new_dir_flag = 1;
+
+  parent_dir = dir_open_root();
+  strlcpy(dir_cpy, dir, strlen(dir) + 1);
+  if(dir_cpy[0] == '/') {  // absolute path
+    for(token = strtok_r(dir_cpy, "/", &save_ptr); token != NULL; 
+      token = strtok_r(NULL, "/", &save_ptr)) {
+      if(!dir_lookup(parent_dir, token, &child_inode)) { // parent_dir is parent, token is new dir
+        // error or last directory
+        if(!strcmp(dir_cpy, "")) // parent_dir is last dir
+          break;
+        else { // parent_dir is invalid
+          dir_close(parent_dir);
+          return false;
+        }
+      }
+      else if(!strcmp(dir_cpy, "")) { // parent_dir is last dir and exists already
+        dir_close(parent_dir);
+        return false;
+      }
+      dir_close(parent_dir);
+      parent_dir = dir_open(child_inode);  // open next directory
+      if(parent_dir == NULL)
+        return false;
+    }
+  }  
+  else {  // relative path
+    strlcpy(cur_cpy, thread_current()->cur_dir, strlen(thread_current()->cur_dir) + 1);
+    // first get to directory of process
+    for(token = strtok_r(dir_cpy, "/", &save_ptr); token != NULL; 
+      token = strtok_r(NULL, "/", &save_ptr)) {
+      dir_lookup(parent_dir, token, &child_inode); // parent_dir is parent, token is new dir
+      dir_close(parent_dir);
+      parent_dir = dir_open(child_inode);  // open next directory
+      if(parent_dir == NULL)
+        return false;
+    }
+
+  }
+
+  free_map_allocate(1, &dir_sector);  // allocate new sector
+  dir_create(dir_sector, 2);  // create new directory
+  dir_add(parent_dir, token, dir_sector);  // add new directory to parent
+  dir_lookup(parent_dir, token, &new_inode);  // get new directory's inode
+  new_dir = dir_open(new_inode);  // open new directory
+
+  dir_add(new_dir, ".", new_dir->inode->sector); // .
+  dir_add(new_dir, "..", parent_dir->inode->sector); // ..
+
+  dir_close(new_dir);
+  dir_close(parent_dir);
 }
