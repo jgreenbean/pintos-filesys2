@@ -21,7 +21,6 @@ struct dir_entry
     block_sector_t inode_sector;        /* Sector number of header. */
     char name[NAME_MAX + 1];            /* Null terminated file name. */
     bool in_use;                        /* In use or free? */
-    // bool is_dir;
   };
 
 /* Creates a directory with space for ENTRY_CNT entries in the
@@ -29,7 +28,6 @@ struct dir_entry
 bool
 dir_create (block_sector_t sector, size_t entry_cnt)
 {
-  // thread_current()->new_dir_flag = 1;
   return inode_create (sector, entry_cnt * sizeof (struct dir_entry));
 }
 
@@ -132,7 +130,6 @@ dir_lookup (const struct dir *dir, const char *name,
     *inode = inode_open (e.inode_sector);
   else
     *inode = NULL;
-  // printf("\ndir_lookup sector: %d, name: %s\n", e.inode_sector, name);
   return *inode != NULL;
 }
 
@@ -176,8 +173,6 @@ dir_add (struct dir *dir, const char *name, block_sector_t inode_sector)
   e.in_use = true;
   strlcpy (e.name, name, sizeof e.name);
   e.inode_sector = inode_sector;
-  // printf("\ndir_add sector: %d, name: %s\n", e.inode_sector, name);
-  // e.is_dir = thread_current()->new_dir_flag;
   success = inode_write_at (dir->inode, &e, sizeof e, ofs) == sizeof e;
 
  done:

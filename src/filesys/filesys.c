@@ -26,20 +26,20 @@ static struct dir* get_dir(const char* file, char* file_name) {
   struct inode* child_inode;
   struct dir* parent_dir = NULL;
 
-
-  parent_dir = dir_open_root();
   dir_cpy = palloc_get_page(PAL_ZERO);
   cur_cpy = palloc_get_page(PAL_ZERO);
   if(dir_cpy == NULL || cur_cpy == NULL) {
-    parent_dir = NULL;
     goto done;
   }
+  parent_dir = dir_open_root();
   strlcpy(dir_cpy, file, strlen(file) + 1);
   if(dir_cpy[0] == '/') {  // absolute path
     token = strtok_r(dir_cpy, "/", &save_ptr);
+    // printf("file: ");
     while(token != NULL) {
+      // printf("/%s", token);
+      strlcpy(file_name, token, strlen(token) + 1);
       if(!dir_lookup(parent_dir, token, &child_inode)) { // parent_dir is parent, token is new dir
-        strlcpy(file_name, token, strlen(token) + 1);
         if((token = strtok_r(NULL, "/", &save_ptr)) == NULL) {
           break;
         }
@@ -49,14 +49,16 @@ static struct dir* get_dir(const char* file, char* file_name) {
           goto done;
         }
       }
-      // save prev token
       token = strtok_r(NULL, "/", &save_ptr);
+      if(token == NULL)
+        goto done;
       dir_close(parent_dir);
       parent_dir = dir_open(child_inode);  // open next directory
       if(parent_dir == NULL) {
         goto done;
       }
     }
+    // printf("\n");
   }
   else {  // relative path
     strlcpy(cur_cpy, thread_current()->cur_dir, strlen(thread_current()->cur_dir) + 1);
@@ -74,9 +76,7 @@ static struct dir* get_dir(const char* file, char* file_name) {
     token = strtok_r(dir_cpy, "/", &save_ptr);
     while(token != NULL) {
       strlcpy(file_name, token, strlen(token) + 1);
-      // printf("\nparent_dir: %p, root dir: %p, token: %s\n\n", parent_dir->inode, dir_open_root()->inode, token);
       if(!dir_lookup(parent_dir, token, &child_inode)) { // parent_dir is parent, token is new dir
-        // strlcpy(file_name, token, strlen(token) + 1);
         if((token = strtok_r(NULL, "/", &save_ptr)) == NULL) {
           break;
         }
@@ -101,9 +101,6 @@ static struct dir* get_dir(const char* file, char* file_name) {
     palloc_free_page(cur_cpy);
     palloc_free_page(dir_cpy);
 
-  // if(parent_dir == dir_open_root())
-  //   ASSERT(0);
-  // printf("parent_dir before returning: %p\n", parent_dir->inode);
   return parent_dir;
 }
 
@@ -140,12 +137,8 @@ filesys_done (void)
 bool
 filesys_create (const char *name, off_t initial_size) 
 {
-  // thread_current()->new_dir_flag = 0;
-
   // look for directory in here instead of syscall 
-
   block_sector_t inode_sector = 0;
-  // struct dir *dir = dir_open_root ();
   char* file_name = palloc_get_page(PAL_ZERO);
   if(file_name == NULL)
     return false;
@@ -154,7 +147,6 @@ filesys_create (const char *name, off_t initial_size)
                   && free_map_allocate (1, &inode_sector)
                   && inode_create (inode_sector, initial_size)
                   && dir_add (dir, file_name, inode_sector));
-
 
   if (!success && inode_sector != 0) 
     free_map_release (inode_sector, 1);
@@ -175,13 +167,9 @@ filesys_open (const char *name)
   if(file_name == NULL)
     return NULL;
   struct dir *dir = get_dir(name, file_name);
-  // printf("dir inode: %p, file_name: %s\n", dir->inode, file_name);
-
-  // struct dir *dir = dir_open_root ();
   struct inode *inode = NULL;
 
   if (dir != NULL) {
-    // printf("\ndir != NULL\n");
     dir_lookup (dir, file_name, &inode);
   }
   dir_close (dir);

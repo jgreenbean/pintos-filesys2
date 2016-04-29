@@ -595,7 +595,8 @@ bool mkdir(const char *dir) {
   bool success = true;
 
   valid_pointer(dir);
-  // thread_current()->new_dir_flag = 1;
+  if(!strcmp(dir, ""))
+    return false;
 
   parent_dir = dir_open_root();
   dir_cpy = palloc_get_page(PAL_ZERO);
@@ -609,8 +610,9 @@ bool mkdir(const char *dir) {
   if(dir_cpy[0] == '/') {  // absolute path
     token = strtok_r(dir_cpy, "/", &save_ptr);
     while(token != NULL) {
+      strlcpy(child_tok, token, strlen(token) + 1);
       if(!dir_lookup(parent_dir, token, &child_inode)) { // parent_dir is parent, token is new dir
-        strlcpy(child_tok, token, strlen(token) + 1);
+        // strlcpy(child_tok, token, strlen(token) + 1);
         if((token = strtok_r(NULL, "/", &save_ptr)) == NULL) {
           break;
         }
@@ -622,6 +624,10 @@ bool mkdir(const char *dir) {
       }
       // save prev token
       token = strtok_r(NULL, "/", &save_ptr);
+      if(token == NULL && dir_lookup(parent_dir, child_tok, &new_inode)) {
+        success = false;
+        goto done;
+      }
       dir_close(parent_dir);
       parent_dir = dir_open(child_inode);  // open next directory
       if(parent_dir == NULL) {
@@ -646,8 +652,9 @@ bool mkdir(const char *dir) {
     // then make new directory
     token = strtok_r(dir_cpy, "/", &save_ptr);
     while(token != NULL) {
+      strlcpy(child_tok, token, strlen(token) + 1);
       if(!dir_lookup(parent_dir, token, &child_inode)) { // parent_dir is parent, token is new dir
-        strlcpy(child_tok, token, strlen(token) + 1);
+        // strlcpy(child_tok, token, strlen(token) + 1);
         if((token = strtok_r(NULL, "/", &save_ptr)) == NULL) {
           break;
         }
@@ -659,6 +666,10 @@ bool mkdir(const char *dir) {
       }
       // save prev token
       token = strtok_r(NULL, "/", &save_ptr);
+      if(token == NULL && dir_lookup(parent_dir, child_tok, &new_inode)) {
+        success = false;
+        goto done;
+      }
       dir_close(parent_dir);
       parent_dir = dir_open(child_inode);  // open next directory
       if(parent_dir == NULL) {
@@ -701,7 +712,6 @@ bool chdir(const char *dir) {
   int cur_dir_len = 0;
 
   valid_pointer(dir);
-  // thread_current()->new_dir_flag = 1;
 
   parent_dir = dir_open_root();
   dir_cpy = palloc_get_page(PAL_ZERO);
@@ -757,9 +767,7 @@ bool chdir(const char *dir) {
     }
     cur_dir_len = strlen(thread_current()->cur_dir);
     strlcpy(thread_current()->cur_dir + cur_dir_len, dir, strlen(dir) + 1);
-  }
-  // printf("thread current dir: %s\n", thread_current()->cur_dir);
-  
+  }  
 
   done:
     palloc_free_page(cur_cpy);
