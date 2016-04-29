@@ -8,7 +8,6 @@
 #include "userprog/syscall.h"
 #include "filesys/file.h"
 #include "filesys/inode.h"
-#include "filesys/directory.h"
 
 /* States in a thread's life cycle. */
 enum thread_status
@@ -88,24 +87,6 @@ struct zombie {
   int exit_status;            /* The exit status of zombie child */
   struct list_elem z_elem;    /* Places the zombie in the parent's zombie list */
 };
-
-// /* In-memory inode. */
-// struct inode 
-// {
-//   struct list_elem elem;              /* Element in inode list. */
-//   block_sector_t sector;              /* Sector number of disk location. */
-//   int open_cnt;                        Number of openers.
-//   bool removed;                       /* True if deleted, false otherwise. */
-//   int deny_write_cnt;                 /* 0: writes ok, >0: deny writes. */
-//   struct inode_disk data;             /* Inode content. */
-// };
-
-/* A directory. */
-// struct dir;
-// {
-//   struct inode *inode;                /* Backing store. */
-//   off_t pos;                          /* Current position. */
-// };
 
 /* An open file. */
 struct file

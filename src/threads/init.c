@@ -99,6 +99,8 @@ main (void)
   malloc_init ();
   paging_init ();
 
+  root_init();
+
   /* Segmentation. */
 #ifdef USERPROG
   tss_init ();
@@ -125,7 +127,6 @@ main (void)
   ide_init ();
   locate_block_devices ();
   filesys_init (format_filesys);
-  root_init();
 #endif
 
   printf ("Boot complete.\n");

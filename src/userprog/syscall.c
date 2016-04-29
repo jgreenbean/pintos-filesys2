@@ -19,6 +19,34 @@
 #include "filesys/free-map.h"
 #include "filesys/directory.h"
 
+/* On-disk inode.
+   Must be exactly BLOCK_SECTOR_SIZE bytes long. */
+struct inode_disk
+  {
+    off_t length;                       /* File size in bytes. */
+    unsigned magic;                     /* Magic number. */
+    block_sector_t indirect_block;      /* 2nd level indirection block. */
+    uint32_t unused[125];               /* Not used. */
+  };
+
+/* In-memory inode. */
+struct inode 
+  {
+    struct list_elem elem;              /* Element in inode list. */
+    block_sector_t sector;              /* Sector number of disk location. */
+    int open_cnt;                       /* Number of openers. */
+    bool removed;                       /* True if deleted, false otherwise. */
+    int deny_write_cnt;                 /* 0: writes ok, >0: deny writes. */
+    struct inode_disk data;             /* Inode content. */
+  };
+
+/* A directory. */
+struct dir 
+  {
+    struct inode *inode;                /* Backing store. */
+    off_t pos;                          /* Current position. */
+  };
+
 static void syscall_handler (struct intr_frame *);
 
 void halt (void) NO_RETURN;
@@ -33,9 +61,10 @@ int write (int fd, const void *buffer, unsigned length);
 void seek (int fd, unsigned position);
 unsigned tell (int fd);
 void close (int fd);
+bool mkdir(const char *dir);
+bool chdir(const char *dir);
 void valid_pointer(const void *pointer);
 bool is_valid(const void *pointer);
-bool mkdir(const char *dir);
 
 // Lock variable
 static struct lock file_lock;
@@ -195,11 +224,17 @@ syscall_handler (struct intr_frame *f)
       dir = *(char **)(f->esp + 4);
       f->eax = mkdir(dir);
       break;
+    case(SYS_CHDIR):
+      valid_pointer(f->esp + 4);
+      dir = *(char **)(f->esp + 4);
+      f->eax = chdir(dir);
+      break;
   	default:
   		printf ("system call! %d \n", syscall);
   		thread_exit ();
   }
 }
+
 
 /*This Function checks if the given pointer
 is valid. That is, check if the pointer is NULL, 
@@ -551,58 +586,92 @@ void close (int fd) {
 }
 
 bool mkdir(const char *dir) {
-  char *dir_cpy, *cur_cpy, *token, *save_ptr;
+  char *dir_cpy, *cur_cpy, *token, *save_ptr, *child_tok;
   block_sector_t dir_sector;
   struct inode* child_inode;
   struct inode* new_inode;
   struct dir* parent_dir;
   struct dir* new_dir;
+  bool success = true;
 
   valid_pointer(dir);
   // thread_current()->new_dir_flag = 1;
 
   parent_dir = dir_open_root();
+  dir_cpy = palloc_get_page(PAL_ZERO);
+  child_tok = palloc_get_page(PAL_ZERO);
+  cur_cpy = palloc_get_page(PAL_ZERO);
+  if(dir_cpy == NULL || child_tok == NULL || cur_cpy == NULL) {
+    success = false;
+    goto done;
+  }
   strlcpy(dir_cpy, dir, strlen(dir) + 1);
   if(dir_cpy[0] == '/') {  // absolute path
-    for(token = strtok_r(dir_cpy, "/", &save_ptr); token != NULL; 
-      token = strtok_r(NULL, "/", &save_ptr)) {
+    token = strtok_r(dir_cpy, "/", &save_ptr);
+    while(token != NULL) {
       if(!dir_lookup(parent_dir, token, &child_inode)) { // parent_dir is parent, token is new dir
-        // error or last directory
-        if(!strcmp(dir_cpy, "")) // parent_dir is last dir
+        strlcpy(child_tok, token, strlen(token) + 1);
+        if((token = strtok_r(NULL, "/", &save_ptr)) == NULL) {
           break;
-        else { // parent_dir is invalid
+        }
+        else {
           dir_close(parent_dir);
-          return false;
+          success = false;
+          goto done;
         }
       }
-      else if(!strcmp(dir_cpy, "")) { // parent_dir is last dir and exists already
-        dir_close(parent_dir);
-        return false;
-      }
+      // save prev token
+      token = strtok_r(NULL, "/", &save_ptr);
       dir_close(parent_dir);
       parent_dir = dir_open(child_inode);  // open next directory
-      if(parent_dir == NULL)
-        return false;
+      if(parent_dir == NULL) {
+        success = false;
+        goto done;
+      }
     }
-  }  
+  }
   else {  // relative path
     strlcpy(cur_cpy, thread_current()->cur_dir, strlen(thread_current()->cur_dir) + 1);
     // first get to directory of process
-    for(token = strtok_r(dir_cpy, "/", &save_ptr); token != NULL; 
+    for(token = strtok_r(cur_cpy, "/", &save_ptr); token != NULL; 
       token = strtok_r(NULL, "/", &save_ptr)) {
       dir_lookup(parent_dir, token, &child_inode); // parent_dir is parent, token is new dir
       dir_close(parent_dir);
       parent_dir = dir_open(child_inode);  // open next directory
-      if(parent_dir == NULL)
-        return false;
+      if(parent_dir == NULL) {
+        success = false;
+        goto done;
+      }
     }
-
+    // then make new directory
+    token = strtok_r(dir_cpy, "/", &save_ptr);
+    while(token != NULL) {
+      if(!dir_lookup(parent_dir, token, &child_inode)) { // parent_dir is parent, token is new dir
+        strlcpy(child_tok, token, strlen(token) + 1);
+        if((token = strtok_r(NULL, "/", &save_ptr)) == NULL) {
+          break;
+        }
+        else {
+          dir_close(parent_dir);
+          success = false;
+          goto done;
+        }
+      }
+      // save prev token
+      token = strtok_r(NULL, "/", &save_ptr);
+      dir_close(parent_dir);
+      parent_dir = dir_open(child_inode);  // open next directory
+      if(parent_dir == NULL) {
+        success = false;
+        goto done;
+      }
+    }
   }
 
   free_map_allocate(1, &dir_sector);  // allocate new sector
   dir_create(dir_sector, 2);  // create new directory
-  dir_add(parent_dir, token, dir_sector);  // add new directory to parent
-  dir_lookup(parent_dir, token, &new_inode);  // get new directory's inode
+  dir_add(parent_dir, child_tok, dir_sector);  // add new directory to parent
+  dir_lookup(parent_dir, child_tok, &new_inode);  // get new directory's inode
   new_dir = dir_open(new_inode);  // open new directory
 
   dir_add(new_dir, ".", new_dir->inode->sector); // .
@@ -610,4 +679,91 @@ bool mkdir(const char *dir) {
 
   dir_close(new_dir);
   dir_close(parent_dir);
+
+  done:
+    palloc_free_page(cur_cpy);
+    palloc_free_page(dir_cpy);
+    palloc_free_page(child_tok);
+
+
+  return success;
+}
+
+/*
+Changes the current working directory of the process to dir, which may be 
+relative or absolute. Returns true if successful, false on failure. 
+*/
+bool chdir(const char *dir) {
+  char *dir_cpy, *cur_cpy, *token, *save_ptr;
+  struct inode* child_inode;
+  struct dir* parent_dir;
+  bool success = true;
+  int cur_dir_len = 0;
+
+  valid_pointer(dir);
+  // thread_current()->new_dir_flag = 1;
+
+  parent_dir = dir_open_root();
+  dir_cpy = palloc_get_page(PAL_ZERO);
+  cur_cpy = palloc_get_page(PAL_ZERO);
+  if(dir_cpy == NULL || cur_cpy == NULL) {
+    success = false;
+    goto done;
+  }
+  strlcpy(dir_cpy, dir, PGSIZE);
+  // absolute path
+  if(dir_cpy[0] == '/') {  // absolute path
+    for(token = strtok_r(dir_cpy, "/", &save_ptr); token != NULL; 
+    token = strtok_r(NULL, "/", &save_ptr)) {
+      if(!dir_lookup(parent_dir, token, &child_inode)) { // given absolute path is invalid
+        success = false;
+        dir_close(parent_dir);
+        goto done;
+      } 
+      dir_close(parent_dir);
+      parent_dir = dir_open(child_inode);  // open next directory
+      if(parent_dir == NULL) {
+        success = false;
+        goto done;
+      }
+    }
+    strlcpy(thread_current()->cur_dir, dir, PGSIZE);  
+  }
+  else {
+    strlcpy(cur_cpy, thread_current()->cur_dir, strlen(thread_current()->cur_dir) + 1);
+    for(token = strtok_r(cur_cpy, "/", &save_ptr); token != NULL; 
+    token = strtok_r(NULL, "/", &save_ptr)) {
+      dir_lookup(parent_dir, token, &child_inode); // parent_dir is parent, token is new dir
+      dir_close(parent_dir);
+      parent_dir = dir_open(child_inode);  // open next directory
+      if(parent_dir == NULL) {
+        success = false;
+        goto done;
+      }
+    }
+    for(token = strtok_r(dir_cpy, "/", &save_ptr); token != NULL; 
+    token = strtok_r(NULL, "/", &save_ptr)) {
+      if(!dir_lookup(parent_dir, token, &child_inode)) { // given absolute path is invalid
+        success = false;
+        dir_close(parent_dir);
+        goto done;
+      } 
+      dir_close(parent_dir);
+      parent_dir = dir_open(child_inode);  // open next directory
+      if(parent_dir == NULL) {
+        success = false;
+        goto done;
+      }
+    }
+    cur_dir_len = strlen(thread_current()->cur_dir);
+    strlcpy(thread_current()->cur_dir + cur_dir_len, dir, strlen(dir) + 1);
+  }
+  // printf("thread current dir: %s\n", thread_current()->cur_dir);
+  
+
+  done:
+    palloc_free_page(cur_cpy);
+    palloc_free_page(dir_cpy);
+
+  return success;
 }

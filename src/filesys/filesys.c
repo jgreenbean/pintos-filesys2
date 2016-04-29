@@ -6,11 +6,106 @@
 #include "filesys/free-map.h"
 #include "filesys/inode.h"
 #include "filesys/directory.h"
+#include "threads/palloc.h"
+#include "threads/thread.h"
 
 /* Partition that contains the file system. */
 struct block *fs_device;
 
 static void do_format (void);
+
+/* A directory. */
+struct dir 
+  {
+    struct inode *inode;                /* Backing store. */
+    off_t pos;                          /* Current position. */
+  };
+
+static struct dir* get_dir(const char* file, char* file_name) {
+  char *dir_cpy, *cur_cpy, *token, *save_ptr;
+  struct inode* child_inode;
+  struct dir* parent_dir = NULL;
+
+
+  parent_dir = dir_open_root();
+  dir_cpy = palloc_get_page(PAL_ZERO);
+  cur_cpy = palloc_get_page(PAL_ZERO);
+  if(dir_cpy == NULL || cur_cpy == NULL) {
+    parent_dir = NULL;
+    goto done;
+  }
+  strlcpy(dir_cpy, file, strlen(file) + 1);
+  if(dir_cpy[0] == '/') {  // absolute path
+    token = strtok_r(dir_cpy, "/", &save_ptr);
+    while(token != NULL) {
+      if(!dir_lookup(parent_dir, token, &child_inode)) { // parent_dir is parent, token is new dir
+        strlcpy(file_name, token, strlen(token) + 1);
+        if((token = strtok_r(NULL, "/", &save_ptr)) == NULL) {
+          break;
+        }
+        else {
+          dir_close(parent_dir);
+          parent_dir = NULL;
+          goto done;
+        }
+      }
+      // save prev token
+      token = strtok_r(NULL, "/", &save_ptr);
+      dir_close(parent_dir);
+      parent_dir = dir_open(child_inode);  // open next directory
+      if(parent_dir == NULL) {
+        goto done;
+      }
+    }
+  }
+  else {  // relative path
+    strlcpy(cur_cpy, thread_current()->cur_dir, strlen(thread_current()->cur_dir) + 1);
+    // first get to directory of process
+    for(token = strtok_r(cur_cpy, "/", &save_ptr); token != NULL; 
+      token = strtok_r(NULL, "/", &save_ptr)) {
+      dir_lookup(parent_dir, token, &child_inode); // parent_dir is parent, token is new dir
+      dir_close(parent_dir);
+      parent_dir = dir_open(child_inode);  // open next directory
+      if(parent_dir == NULL) {
+        goto done;
+      }
+    }
+    // then make new directory
+    token = strtok_r(dir_cpy, "/", &save_ptr);
+    while(token != NULL) {
+      strlcpy(file_name, token, strlen(token) + 1);
+      // printf("\nparent_dir: %p, root dir: %p, token: %s\n\n", parent_dir->inode, dir_open_root()->inode, token);
+      if(!dir_lookup(parent_dir, token, &child_inode)) { // parent_dir is parent, token is new dir
+        // strlcpy(file_name, token, strlen(token) + 1);
+        if((token = strtok_r(NULL, "/", &save_ptr)) == NULL) {
+          break;
+        }
+        else {
+          dir_close(parent_dir);
+          parent_dir = NULL;
+          goto done;
+        }
+      }
+      // save prev token
+      token = strtok_r(NULL, "/", &save_ptr);
+      if(token == NULL)
+        goto done;
+      dir_close(parent_dir);
+      parent_dir = dir_open(child_inode);  // open next directory
+      if(parent_dir == NULL) {
+        goto done;
+      }
+    }
+  }
+  done:
+    palloc_free_page(cur_cpy);
+    palloc_free_page(dir_cpy);
+
+  // if(parent_dir == dir_open_root())
+  //   ASSERT(0);
+  // printf("parent_dir before returning: %p\n", parent_dir->inode);
+  return parent_dir;
+}
 
 /* Initializes the file system module.
    If FORMAT is true, reformats the file system. */
@@ -46,15 +141,25 @@ bool
 filesys_create (const char *name, off_t initial_size) 
 {
   // thread_current()->new_dir_flag = 0;
+
+  // look for directory in here instead of syscall 
+
   block_sector_t inode_sector = 0;
-  struct dir *dir = dir_open_root ();
+  // struct dir *dir = dir_open_root ();
+  char* file_name = palloc_get_page(PAL_ZERO);
+  if(file_name == NULL)
+    return false;
+  struct dir *dir = get_dir(name, file_name);
   bool success = (dir != NULL
                   && free_map_allocate (1, &inode_sector)
                   && inode_create (inode_sector, initial_size)
-                  && dir_add (dir, name, inode_sector));
+                  && dir_add (dir, file_name, inode_sector));
+
+
   if (!success && inode_sector != 0) 
     free_map_release (inode_sector, 1);
   dir_close (dir);
+  palloc_free_page(file_name);
   return success;
 }
 
@@ -66,11 +171,19 @@ filesys_create (const char *name, off_t initial_size)
 struct file *
 filesys_open (const char *name)
 {
-  struct dir *dir = dir_open_root ();
+  char* file_name = palloc_get_page(PAL_ZERO);
+  if(file_name == NULL)
+    return NULL;
+  struct dir *dir = get_dir(name, file_name);
+  // printf("dir inode: %p, file_name: %s\n", dir->inode, file_name);
+
+  // struct dir *dir = dir_open_root ();
   struct inode *inode = NULL;
 
-  if (dir != NULL)
-    dir_lookup (dir, name, &inode);
+  if (dir != NULL) {
+    // printf("\ndir != NULL\n");
+    dir_lookup (dir, file_name, &inode);
+  }
   dir_close (dir);
 
   return file_open (inode);

@@ -8,7 +8,6 @@
 #include "threads/malloc.h"
 #include "userprog/syscall.h"
 #include <stdio.h>
-#include "threads/thread.h"
 
 /* Identifies an inode. */
 #define INODE_MAGIC 0x494e4f44
