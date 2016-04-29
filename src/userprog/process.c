@@ -529,7 +529,7 @@ setup_stack (void **esp, const char* file_name)
     my_esp -= token_len; // allocate token size
     strlcpy(my_esp, argv[i], token_len); // push arg onto stack
     address = (int *) my_esp;
-    argv[i] = address; // save address
+    argv[i] = (char *) address; // save address
   }
   my_esp -= (4 - (arg_bytes % 4)); // align stack
   my_esp -= 4; // null sentinel
@@ -542,7 +542,7 @@ setup_stack (void **esp, const char* file_name)
   my_esp -= 4;
   memcpy(my_esp, &address, sizeof(int)); // push address of argv onto stack
   my_esp -= 4;
-  *my_esp = argc; // push argc
+  *(int *) my_esp = argc; // push argc
   my_esp -= 4;
 
   *esp = my_esp;

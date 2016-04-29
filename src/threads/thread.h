@@ -99,7 +99,7 @@ struct file
 /* An open file with its file descriptor. */
 struct open_file {
   struct file* f;             /* The open file */
-  struct dir* d;
+  struct dir* d;              /* An open directory*/
   int fd;                     /* The file descriptor for file f */
   struct list_elem file_elem; /* Places the open_file in a thread's open_files list */
 };

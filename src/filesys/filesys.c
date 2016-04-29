@@ -14,13 +14,6 @@ struct block *fs_device;
 
 static void do_format (void);
 
-/* A directory. */
-struct dir 
-  {
-    struct inode *inode;                /* Backing store. */
-    off_t pos;                          /* Current position. */
-  };
-
 static struct dir* get_dir(const char* file, char* file_name) {
   char *dir_cpy, *cur_cpy, *token, *save_ptr;
   struct inode* child_inode;
@@ -146,7 +139,7 @@ filesys_create (const char *name, off_t initial_size)
   bool success = (dir != NULL
                   && free_map_allocate (1, &inode_sector)
                   && inode_create (inode_sector, initial_size)
-                  && dir_add (dir, file_name, inode_sector));
+                  && dir_add (dir, file_name, inode_sector, false));
 
   if (!success && inode_sector != 0) 
     free_map_release (inode_sector, 1);
@@ -171,9 +164,13 @@ filesys_open (const char *name)
 
   if (dir != NULL) {
     dir_lookup (dir, file_name, &inode);
+    if (dir_isdir(dir, file_name)) {
+      dir_close (dir);
+      return NULL;
+    }
   }
-  dir_close (dir);
 
+  dir_close (dir);
   return file_open (inode);
 }
 
@@ -184,10 +181,12 @@ filesys_open (const char *name)
 bool
 filesys_remove (const char *name) 
 {
-  struct dir *dir = dir_open_root ();
-  bool success = dir != NULL && dir_remove (dir, name);
+  char* file_name = palloc_get_page(PAL_ZERO);
+  if(file_name == NULL)
+    return NULL;
+  struct dir *dir = get_dir(name, file_name);
+  bool success = dir != NULL && dir_remove (dir, file_name);
   dir_close (dir); 
-
   return success;
 }
 

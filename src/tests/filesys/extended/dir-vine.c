@@ -35,6 +35,7 @@ test_main (void)
         break;
       CHECK ((fd = open (file_name)) > 1, "open \"%s\"", file_name);
       snprintf (contents, sizeof contents, "contents %d\n", i);
+
       if (write (fd, contents, strlen (contents)) != (int) strlen (contents)) 
         {
           CHECK (remove (file_name), "remove \"%s\"", file_name);
@@ -42,6 +43,7 @@ test_main (void)
           break;
         }
       close (fd);
+
       
       /* Create directory. */
       snprintf (dir_name, sizeof dir_name, "dir%d", i);
