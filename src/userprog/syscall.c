@@ -77,7 +77,6 @@ void syscall_init (void) {
   lock_init(&file_lock);
 }
 
-
 static struct dir* get_dir(const char* file, char* file_name) {
   char *dir_cpy, *cur_cpy, *token, *save_ptr;
   struct inode* child_inode;
@@ -89,6 +88,8 @@ static struct dir* get_dir(const char* file, char* file_name) {
     goto done;
   }
   parent_dir = dir_open_root();
+  if(parent_dir == NULL)
+    goto done;
   strlcpy(dir_cpy, file, strlen(file) + 1);
   if(dir_cpy[0] == '/') {  // absolute path
     token = strtok_r(dir_cpy, "/", &save_ptr);
@@ -469,7 +470,7 @@ bool remove (const char *file){
     lock_release(&file_lock);
     exit(-1);
   } 
-  bool success = filesys_remove(file);
+  bool success = filesys_remove(file);          
   lock_release(&file_lock);
 	return success;
 }
@@ -499,26 +500,37 @@ int open (const char *file){
   }
   of->fd = thread_current()->fd_cnt;
 
-
   f = filesys_open(file);
 
   if(f == NULL) {
-    dir = get_dir(file, dir_name);
-    if (dir == NULL) {
-      palloc_free_page(of);
-      palloc_free_page(dir_name);
-      lock_release(&file_lock);
-      return -1;
+    if(!strcmp(file, "/"))
+      dir = dir_open_root();
+    else {
+      dir = get_dir(file, dir_name);
+      if (dir == NULL) {
+        palloc_free_page(of);
+        palloc_free_page(dir_name);
+        lock_release(&file_lock);
+        return -1;
+      }
+      dir_lookup(dir, dir_name, &dir_inode);
+      dir_close(dir);
+      dir = dir_open(dir_inode);
+      if(dir == NULL) {
+        palloc_free_page(of);
+        palloc_free_page(dir_name);
+        lock_release(&file_lock);
+        return -1;
+      }
     }
-    dir_lookup(dir, dir_name, &dir_inode);
-    dir_close(dir);
-    dir = dir_open(dir_inode);
     of->d = dir;
     of->f = NULL;
   } else {
     of->f = f;
     of->d = NULL;
   }
+
+  // printf("file: %s, fd: %d\n", file, thread_current()->fd_cnt);
 
   thread_current()->fd_cnt++;
   list_push_back(&thread_current()->open_files, &of->file_elem);
@@ -703,19 +715,32 @@ void close (int fd) {
   e != list_end (&thread_current()->open_files);
   e = list_next (e))
   {
-      of = list_entry(e, struct open_file, file_elem);
-      if (of->fd == fd) {
-        file_close(of->f);
-        list_remove(e);
-        palloc_free_page(of);
-        found = true;
+    of = list_entry(e, struct open_file, file_elem);
+    if (of->fd == fd) {
+      found = true;
+      if(of->d == NULL) {
+        if(of->f != NULL) {
+          file_close(of->f);
+          break;
+        }
+        else {
+          lock_release(&file_lock);
+          exit(-1);
+        }
+      }
+      else {
+        dir_close(of->d);
         break;
       }
+    }
   }
+
   if (!found) {
     lock_release(&file_lock);
     exit(-1);
   }
+  list_remove(e);
+  palloc_free_page(of);
   lock_release(&file_lock);
 }
 
@@ -733,6 +758,8 @@ bool mkdir(const char *dir) {
     return false;
 
   parent_dir = dir_open_root();
+  if(parent_dir == NULL)
+    goto done;
   dir_cpy = palloc_get_page(PAL_ZERO);
   child_tok = palloc_get_page(PAL_ZERO);
   cur_cpy = palloc_get_page(PAL_ZERO);
@@ -813,12 +840,12 @@ bool mkdir(const char *dir) {
     }
   }
 
-  free_map_allocate(1, &dir_sector);  // allocate new sector
+  if(!free_map_allocate(1, &dir_sector)) // allocate new sector
+    goto done;
   dir_create(dir_sector, 2);  // create new directory
   dir_add(parent_dir, child_tok, dir_sector, true);  // add new directory to parent
   dir_lookup(parent_dir, child_tok, &new_inode);  // get new directory's inode
   new_dir = dir_open(new_inode);  // open new directory
-
 
   dir_add(new_dir, ".", new_dir->inode->sector, true); // .
   dir_add(new_dir, "..", parent_dir->inode->sector, true); // ..
@@ -848,6 +875,8 @@ bool chdir(const char *dir) {
   valid_pointer(dir);
 
   parent_dir = dir_open_root();
+  if(parent_dir == NULL)
+    goto done;
   dir_cpy = palloc_get_page(PAL_ZERO);
   cur_cpy = palloc_get_page(PAL_ZERO);
   if(dir_cpy == NULL || cur_cpy == NULL) {
@@ -900,7 +929,12 @@ bool chdir(const char *dir) {
       }
     }
     cur_dir_len = strlen(thread_current()->cur_dir);
+    if(strcmp(thread_current()->cur_dir, "/")) {
+      strlcpy(thread_current()->cur_dir + cur_dir_len, "/", 2);
+      cur_dir_len++;
+    }
     strlcpy(thread_current()->cur_dir + cur_dir_len, dir, strlen(dir) + 1);
+    // printf("cur_dir: %s\n", thread_current()->cur_dir);
   }  
 
   done:
@@ -972,6 +1006,7 @@ int inumber (int fd) {
        e = list_next (e)) 
     { 
     of = list_entry(e, struct open_file, file_elem); 
+    // printf("fd: %d\n", of->fd);
     if(of->fd == fd) { 
       found_fd = true;
       if(of->d == NULL) {
@@ -979,6 +1014,7 @@ int inumber (int fd) {
           sector_num = of->f->inode->sector;
           break;
         } else {
+          printf("fails\n");
           exit(-1);
         }
       } else {
@@ -991,4 +1027,3 @@ int inumber (int fd) {
     exit(-1);
   return sector_num;
 }
-

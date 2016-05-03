@@ -40,9 +40,14 @@ dir_open (struct inode *inode)
   struct dir *dir = calloc (1, sizeof *dir);
   if (inode != NULL && dir != NULL)
     {
-      dir->inode = inode;
-      dir->pos = 0;
-      return dir;
+      if(!inode_get_removed(inode)) {  
+        dir->inode = inode;
+        dir->pos = 0;
+        return dir;
+      }
+      inode_close (inode);
+      free (dir);
+      return NULL;
     }
   else
     {
@@ -205,7 +210,22 @@ dir_remove (struct dir *dir, const char *name)
   if (inode == NULL)
     goto done;
 
-  /* Erase directory entry. */
+  if(e.is_dir) {
+    struct dir_entry e_entry;
+    off_t e_pos = 0;
+
+    while (inode_read_at (inode, &e_entry, sizeof e_entry, e_pos) == sizeof e) 
+    {
+      // printf("name: %s\n", e_entry.name);
+      e_pos += sizeof e_entry;
+      if (e_entry.in_use && strcmp(e_entry.name, ".") && strcmp(e_entry.name, ".."))
+        {
+          goto done;
+        }
+    }
+  }
+
+  // Erase directory entry. 
   e.in_use = false;
   if (inode_write_at (dir->inode, &e, sizeof e, ofs) != sizeof e) 
     goto done;
