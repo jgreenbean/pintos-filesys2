@@ -110,6 +110,7 @@ palloc_get_multiple (enum palloc_flags flags, size_t page_cnt)
 void *
 palloc_get_page (enum palloc_flags flags) 
 {
+  // printf("palloc_get_page\n");
   return palloc_get_multiple (flags, 1);
 }
 
@@ -145,6 +146,8 @@ palloc_free_multiple (void *pages, size_t page_cnt)
 void
 palloc_free_page (void *page) 
 {
+  // printf("palloc_free_page\n");
+
   palloc_free_multiple (page, 1);
 }
 

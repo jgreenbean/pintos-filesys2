@@ -20,10 +20,15 @@ file_open (struct inode *inode)
   struct file *file = calloc (1, sizeof *file);
   if (inode != NULL && file != NULL)
     {
-      file->inode = inode;
-      file->pos = 0;
-      file->deny_write = false;
-      return file;
+      if(!inode_get_removed(inode)) {  
+        file->inode = inode;
+        file->pos = 0;
+        file->deny_write = false;
+        return file;
+      }
+      inode_close (inode);
+      free (file);
+      return NULL;
     }
   else
     {

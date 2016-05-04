@@ -18,6 +18,7 @@
 #include "filesys/inode.h"
 #include "filesys/free-map.h"
 #include "filesys/directory.h"
+#include "threads/malloc.h"
 
 /* On-disk inode.
    Must be exactly BLOCK_SECTOR_SIZE bytes long. */
@@ -71,10 +72,12 @@ bool is_valid(const void *pointer);
 
 // Lock variable
 static struct lock file_lock;
+static struct lock exit_lock;
 
 void syscall_init (void) {
   intr_register_int (0x30, 3, INTR_ON, syscall_handler, "syscall");
   lock_init(&file_lock);
+  lock_init(&exit_lock);
 }
 
 static struct dir* get_dir(const char* file, char* file_name) {
@@ -84,11 +87,13 @@ static struct dir* get_dir(const char* file, char* file_name) {
 
   dir_cpy = palloc_get_page(PAL_ZERO);
   cur_cpy = palloc_get_page(PAL_ZERO);
+  // dir_cpy = malloc(strlen(file) + 1);
+  // cur_cpy = malloc(strlen(thread_current()->cur_dir));
   if(dir_cpy == NULL || cur_cpy == NULL) {
     goto done;
   }
   parent_dir = dir_open_root();
-  if(parent_dir == NULL)
+  if(parent_dir == NULL) 
     goto done;
   strlcpy(dir_cpy, file, strlen(file) + 1);
   if(dir_cpy[0] == '/') {  // absolute path
@@ -155,6 +160,8 @@ static struct dir* get_dir(const char* file, char* file_name) {
   done:
     palloc_free_page(cur_cpy);
     palloc_free_page(dir_cpy);
+    // free(cur_cpy);
+    // free(dir_cpy);
 
   return parent_dir;
 }
@@ -377,6 +384,7 @@ void exit (int status) {
   struct open_file *of;
 
   // if parent process hasn't already exited
+  lock_acquire(&exit_lock);
   if(thread_current()->parent_process != NULL) {
     z = palloc_get_page(PAL_ZERO); // allocate
     z->exit_status = status;
@@ -395,6 +403,7 @@ void exit (int status) {
     c = list_entry(e, struct thread, child_elem);
     c->parent_process = NULL;
   }
+  lock_release(&exit_lock);
 
   /*Rebecca Drove Here*/
   // deallocate all its zombie children
@@ -432,6 +441,8 @@ void exit (int status) {
     file_close(thread_current()->exec_file);
     lock_release(&file_lock);
   }
+
+  palloc_free_page(thread_current()->cur_dir);
 
   thread_exit();
 }
@@ -479,26 +490,27 @@ int open (const char *file){
   /*Charles Drove Here*/
   struct file* f;
   struct open_file* of;
-  struct dir* dir;
+  struct dir* dir = NULL;
   struct inode* dir_inode;
-  char* dir_name = palloc_get_page(PAL_ZERO);
-  if (dir_name == NULL) {
-    exit(-1);
-  }
+  char* dir_name;
+  // if (dir_name == NULL) {
+  //   exit(-1);
+  // }
 
   lock_acquire(&file_lock);
+  printf("file: %s\n", file);
   if (!is_valid(file)) {
     lock_release(&file_lock);
     exit(-1);
   }
 
-  of = palloc_get_page(PAL_ZERO);
-  if (of == NULL) {
-    palloc_free_page(dir_name);
-    lock_release(&file_lock);
-    exit(-1);
-  }
-  of->fd = thread_current()->fd_cnt;
+  // of = palloc_get_page(PAL_ZERO);
+  // if (of == NULL) {
+  //   palloc_free_page(dir_name);
+  //   lock_release(&file_lock);
+  //   exit(-1);
+  // }
+  // of->fd = thread_current()->fd_cnt;
 
   f = filesys_open(file);
 
@@ -506,9 +518,14 @@ int open (const char *file){
     if(!strcmp(file, "/"))
       dir = dir_open_root();
     else {
+      dir_name = palloc_get_page(PAL_ZERO);
+      if(dir_name == NULL) {
+        lock_release(&file_lock);
+        return -1;
+      }
       dir = get_dir(file, dir_name);
       if (dir == NULL) {
-        palloc_free_page(of);
+        //palloc_free_page(of);
         palloc_free_page(dir_name);
         lock_release(&file_lock);
         return -1;
@@ -517,24 +534,35 @@ int open (const char *file){
       dir_close(dir);
       dir = dir_open(dir_inode);
       if(dir == NULL) {
-        palloc_free_page(of);
+        //palloc_free_page(of);
         palloc_free_page(dir_name);
         lock_release(&file_lock);
         return -1;
       }
+      palloc_free_page(dir_name);
     }
-    of->d = dir;
-    of->f = NULL;
-  } else {
-    of->f = f;
-    of->d = NULL;
+  //   of->d = dir;
+  //   of->f = NULL;
+  // } else {
+  //   of->f = f;
+  //   of->d = NULL;
   }
+
+  of = palloc_get_page(PAL_ZERO);
+  if (of == NULL) {
+    // palloc_free_page(dir_name);
+    lock_release(&file_lock);
+    exit(-1);
+  }
+  of->f = f;
+  of->d = dir;
+  of->fd = thread_current()->fd_cnt;
 
   // printf("file: %s, fd: %d\n", file, thread_current()->fd_cnt);
 
   thread_current()->fd_cnt++;
   list_push_back(&thread_current()->open_files, &of->file_elem);
-  palloc_free_page(dir_name);
+  // palloc_free_page(dir_name);
   lock_release(&file_lock);
 	return of->fd;
 }
@@ -706,6 +734,7 @@ void close (int fd) {
   }
 
   lock_acquire(&file_lock);
+
   struct open_file *of;
   struct list_elem *e;
   bool found;
@@ -878,14 +907,16 @@ bool chdir(const char *dir) {
   if(parent_dir == NULL)
     goto done;
   dir_cpy = palloc_get_page(PAL_ZERO);
-  cur_cpy = palloc_get_page(PAL_ZERO);
-  if(dir_cpy == NULL || cur_cpy == NULL) {
+  // // cur_cpy = palloc_get_page(PAL_ZERO);
+  if(dir_cpy == NULL) {
     success = false;
     goto done;
   }
-  strlcpy(dir_cpy, dir, PGSIZE);
+  // strlcpy(dir_cpy, dir, PGSIZE);
   // absolute path
-  if(dir_cpy[0] == '/') {  // absolute path
+  if(dir[0] == '/') {  // absolute path
+
+    strlcpy(dir_cpy, dir, PGSIZE);
     for(token = strtok_r(dir_cpy, "/", &save_ptr); token != NULL; 
     token = strtok_r(NULL, "/", &save_ptr)) {
       if(!dir_lookup(parent_dir, token, &child_inode)) { // given absolute path is invalid
@@ -903,8 +934,9 @@ bool chdir(const char *dir) {
     strlcpy(thread_current()->cur_dir, dir, PGSIZE);  
   }
   else {
-    strlcpy(cur_cpy, thread_current()->cur_dir, strlen(thread_current()->cur_dir) + 1);
-    for(token = strtok_r(cur_cpy, "/", &save_ptr); token != NULL; 
+    // strlcpy(cur_cpy, thread_current()->cur_dir, strlen(thread_current()->cur_dir) + 1);
+    strlcpy(dir_cpy, thread_current()->cur_dir, strlen(thread_current()->cur_dir) + 1);
+    for(token = strtok_r(dir_cpy, "/", &save_ptr); token != NULL; 
     token = strtok_r(NULL, "/", &save_ptr)) {
       dir_lookup(parent_dir, token, &child_inode); // parent_dir is parent, token is new dir
       dir_close(parent_dir);
@@ -914,6 +946,15 @@ bool chdir(const char *dir) {
         goto done;
       }
     }
+    palloc_free_page(dir_cpy);
+    dir_cpy = palloc_get_page(PAL_ZERO);
+  // // cur_cpy = palloc_get_page(PAL_ZERO);
+    if(dir_cpy == NULL) {
+      success = false;
+      goto done;
+    }
+    strlcpy(dir_cpy, dir, PGSIZE);
+
     for(token = strtok_r(dir_cpy, "/", &save_ptr); token != NULL; 
     token = strtok_r(NULL, "/", &save_ptr)) {
       if(!dir_lookup(parent_dir, token, &child_inode)) { // given absolute path is invalid
@@ -937,8 +978,9 @@ bool chdir(const char *dir) {
     // printf("cur_dir: %s\n", thread_current()->cur_dir);
   }  
 
+  dir_close(parent_dir);
   done:
-    palloc_free_page(cur_cpy);
+    // palloc_free_page(cur_cpy);
     palloc_free_page(dir_cpy);
 
   return success;

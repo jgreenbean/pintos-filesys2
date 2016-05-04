@@ -118,8 +118,9 @@ process_wait (tid_t child_tid)
         }
         child->wait_flag = 1;
 
-        intr_set_level(old);
+        // intr_set_level(old);
         sema_down(&child->process_sema); // block
+        intr_set_level(old);
         break;
       }
   }

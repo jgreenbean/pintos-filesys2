@@ -25,7 +25,7 @@ static struct dir* get_dir(const char* file, char* file_name) {
     goto done;
   }
   parent_dir = dir_open_root();
-  if(parent_dir == NULL)
+  if(parent_dir == NULL) 
     goto done;
   strlcpy(dir_cpy, file, strlen(file) + 1);
   if(dir_cpy[0] == '/') {  // absolute path
@@ -172,11 +172,13 @@ filesys_open (const char *name)
   if (dir != NULL) {
     dir_lookup (dir, file_name, &inode);
     if (dir_isdir(dir, file_name)) {
+      palloc_free_page(file_name);
       dir_close (dir);
       return NULL;
     }
   }
   dir_close (dir);
+  palloc_free_page(file_name);
   return file_open (inode);
 }
 
@@ -193,6 +195,7 @@ filesys_remove (const char *name)
   struct dir *dir = get_dir(name, file_name);
   bool success = dir != NULL && dir_remove (dir, file_name);
   dir_close (dir); 
+  palloc_free_page(file_name);
   return success;
 }
 
