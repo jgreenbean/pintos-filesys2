@@ -103,10 +103,11 @@ thread_init (void)
 }
 
 void root_init() {
-  thread_current()->cur_dir = palloc_get_page(PAL_ZERO);
-  if(thread_current()->cur_dir == NULL)
-    exit(-1);
-  strlcpy(thread_current()->cur_dir, "/", PGSIZE);
+  // thread_current()->cur_dir = palloc_get_page(PAL_ZERO);
+  // if(thread_current()->cur_dir == NULL)
+  //   exit(-1);
+  // strlcpy(thread_current()->cur_dir, "/", PGSIZE);
+  thread_current()->cur_dir = dir_open_root();
 }
 
 /* Starts preemptive thread scheduling by enabling interrupts.
@@ -216,10 +217,11 @@ thread_create (const char *name, int priority,
   thread_current()->new_proc = t;
 
   // Initialize directory for child thread
-  t->cur_dir = palloc_get_page(PAL_ZERO);
-  if(t->cur_dir == NULL)
-    exit(-1);
-  strlcpy(t->cur_dir, thread_current()->cur_dir, PGSIZE);
+  // t->cur_dir = palloc_get_page(PAL_ZERO);
+  // if(t->cur_dir == NULL)
+  //   exit(-1);
+  // strlcpy(t->cur_dir, thread_current()->cur_dir, PGSIZE);
+  // t->cur_dir = dir_reopen(thread_current()->cur_dir);
 
   /* Add to run queue. */
   //If new thread's priority is higher than current thread...

@@ -15,24 +15,23 @@ struct block *fs_device;
 static void do_format (void);
 
 static struct dir* get_dir(const char* file, char* file_name) {
-  char *dir_cpy, *cur_cpy, *token, *save_ptr;
+  char *dir_cpy, *token, *save_ptr;
   struct inode* child_inode;
   struct dir* parent_dir = NULL;
 
   dir_cpy = palloc_get_page(PAL_ZERO);
-  cur_cpy = palloc_get_page(PAL_ZERO);
-  if(dir_cpy == NULL || cur_cpy == NULL) {
+  // cur_cpy = palloc_get_page(PAL_ZERO);
+  if(dir_cpy == NULL) {
     goto done;
   }
-  parent_dir = dir_open_root();
-  if(parent_dir == NULL) 
-    goto done;
+
   strlcpy(dir_cpy, file, strlen(file) + 1);
   if(dir_cpy[0] == '/') {  // absolute path
+    parent_dir = dir_open_root();
+    if(parent_dir == NULL) 
+      goto done;
     token = strtok_r(dir_cpy, "/", &save_ptr);
-    // printf("file: ");
     while(token != NULL) {
-      // printf("/%s", token);
       strlcpy(file_name, token, strlen(token) + 1);
       if(!dir_lookup(parent_dir, token, &child_inode)) { // parent_dir is parent, token is new dir
         if((token = strtok_r(NULL, "/", &save_ptr)) == NULL) {
@@ -53,22 +52,22 @@ static struct dir* get_dir(const char* file, char* file_name) {
         goto done;
       }
     }
-    // printf("\n");
   }
   else {  // relative path
-    strlcpy(cur_cpy, thread_current()->cur_dir, strlen(thread_current()->cur_dir) + 1);
-    // first get to directory of process
-    // printf("parent_dir: %p\n", parent_dir);
+    // strlcpy(cur_cpy, thread_current()->cur_dir, strlen(thread_current()->cur_dir) + 1);
+    // // first get to directory of process
+    // for(token = strtok_r(cur_cpy, "/", &save_ptr); token != NULL; 
+    //   token = strtok_r(NULL, "/", &save_ptr)) {
+    //   dir_lookup(parent_dir, token, &child_inode); // parent_dir is parent, token is new dir
+    //   dir_close(parent_dir);
+    //   parent_dir = dir_open(child_inode);  // open next directory
+    //   if(parent_dir == NULL) {
+    //     goto done;
+    //   }
+    // }
 
-    for(token = strtok_r(cur_cpy, "/", &save_ptr); token != NULL; 
-      token = strtok_r(NULL, "/", &save_ptr)) {
-      dir_lookup(parent_dir, token, &child_inode); // parent_dir is parent, token is new dir
-      dir_close(parent_dir);
-      parent_dir = dir_open(child_inode);  // open next directory
-      if(parent_dir == NULL) {
-        goto done;
-      }
-    }
+    parent_dir = dir_reopen(thread_current()->cur_dir);
+
     // then make new directory
     token = strtok_r(dir_cpy, "/", &save_ptr);
     while(token != NULL) {
@@ -95,7 +94,7 @@ static struct dir* get_dir(const char* file, char* file_name) {
     }
   }
   done:
-    palloc_free_page(cur_cpy);
+    // palloc_free_page(cur_cpy);
     palloc_free_page(dir_cpy);
 
   return parent_dir;

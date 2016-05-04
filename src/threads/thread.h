@@ -8,6 +8,7 @@
 #include "userprog/syscall.h"
 #include "filesys/file.h"
 #include "filesys/inode.h"
+#include "filesys/directory.h"
 
 /* States in a thread's life cycle. */
 enum thread_status
@@ -142,8 +143,8 @@ struct thread
     struct list zombies;                /*Dead children*/
     int fd_cnt;                         /*File descriptor counter*/
     struct list open_files;             /*List of all files opened by this thread*/
-    char* cur_dir;                      /*Each process has its own current directory*/
-    // bool new_dir_flag;                  /*If newest directory entry is directory*/
+    // char* cur_dir;                      /*Each process has its own current directory*/
+    struct dir* cur_dir;
 
     /* For child threads */
     struct thread *parent_process;      /*The parent process that created this thread.*/

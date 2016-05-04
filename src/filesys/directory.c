@@ -80,7 +80,6 @@ dir_close (struct dir *dir)
 {
   if (dir != NULL)
     {
-      // printf("closing a dir\n");
       inode_close (dir->inode);
       free (dir);
     }
