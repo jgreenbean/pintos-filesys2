@@ -31,18 +31,14 @@ test_main (void)
 
       /* Create file. */
       snprintf (file_name, sizeof file_name, "file%d", i);
-      if (!create (file_name, 0)) {
-                 printf("CREATE failed, i: %d\n", i);
-
+      if (!create (file_name, 0))
         break;
-      }
       CHECK ((fd = open (file_name)) > 1, "open \"%s\"", file_name);
       snprintf (contents, sizeof contents, "contents %d\n", i);
 
       if (write (fd, contents, strlen (contents)) != (int) strlen (contents)) 
         {
           CHECK (remove (file_name), "remove \"%s\"", file_name);
-          printf("WRITE failed\n");
           close (fd);
           break;
         }
@@ -54,8 +50,6 @@ test_main (void)
       if (!mkdir (dir_name)) 
         {
           CHECK (remove (file_name), "remove \"%s\"", file_name);
-                    printf("MKDIR failed\n");
-
           break; 
         }
 
@@ -85,8 +79,7 @@ test_main (void)
 
       snprintf (file_name, sizeof file_name, "file%d", i);
       snprintf (dir_name, sizeof dir_name, "dir%d", i);
-      // puts(file_name);
-      // puts(dir_name);
+
       CHECK (chdir (".."), "chdir \"..\"");
       CHECK (remove (dir_name), "remove \"%s\"", dir_name);
       CHECK (remove (file_name), "remove \"%s\"", file_name);

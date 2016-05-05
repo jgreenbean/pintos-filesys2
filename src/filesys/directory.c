@@ -40,7 +40,6 @@ dir_open (struct inode *inode)
   struct dir *dir = calloc (1, sizeof *dir);
   if (inode != NULL && dir != NULL)
     {
-      // printf("opening a dir\n");
       if(!inode_get_removed(inode)) {  
         dir->inode = inode;
         dir->pos = 0;
@@ -48,14 +47,12 @@ dir_open (struct inode *inode)
       }
       inode_close (inode);
       free (dir);
-      printf("\ninode was removed. removed == %d. dir: %p. inode: %p\n", inode_get_removed(inode), dir, inode);
       return NULL;
     }
   else
     {
       inode_close (inode);
       free (dir);
-      printf("\ndir was null\n");
       return NULL; 
     }
 }
@@ -82,7 +79,6 @@ dir_close (struct dir *dir)
 {
   if (dir != NULL)
     {
-      // printf("closing a dir\n");
       inode_close (dir->inode);
       free (dir);
     }
@@ -111,7 +107,9 @@ lookup (const struct dir *dir, const char *name,
   ASSERT (name != NULL);
 
   for (ofs = 0; inode_read_at (dir->inode, &e, sizeof e, ofs) == sizeof e;
-       ofs += sizeof e) 
+       ofs += sizeof e) {
+    // printf("name: %s, entry name: %s, entry sector: %d, dir sector: %d\n", name, e.name, e.inode_sector, inode_get_inumber(dir->inode));
+
     if (e.in_use && !strcmp (name, e.name)) 
       {
         if (ep != NULL)
@@ -120,6 +118,7 @@ lookup (const struct dir *dir, const char *name,
           *ofsp = ofs;
         return true;
       }
+    }
   return false;
 }
 
@@ -185,7 +184,10 @@ dir_add (struct dir *dir, const char *name, block_sector_t inode_sector, bool is
   strlcpy (e.name, name, sizeof e.name);
   e.inode_sector = inode_sector;
   e.is_dir = is_dir;
+  // printf("dir add name: %s\n", name);
+
   success = inode_write_at (dir->inode, &e, sizeof e, ofs) == sizeof e;
+  // printf("dir add name: %s, success: %d\n", name, success);
 
  done:
   return success;
@@ -209,12 +211,14 @@ dir_remove (struct dir *dir, const char *name)
   if (!lookup (dir, name, &e, &ofs))
     goto done;
 
+  // printf("dir remove name: %s, sector: %d\n", name, e.inode_sector);
+
   /* Open inode. */
   inode = inode_open (e.inode_sector);
   if (inode == NULL)
     goto done;
 
-  printf("inode: %p\n", inode);
+  // printf("dir remove name: %s, sector: %d\n", name, e.inode_sector);
   if(e.is_dir) {
     struct dir_entry e_entry;
     off_t e_pos = 0;

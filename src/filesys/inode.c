@@ -160,10 +160,8 @@ inode_create (block_sector_t sector, off_t length)
 struct inode *
 inode_open (block_sector_t sector)
 {
-  // printf("\nopening inode\n");
   struct list_elem *e;
   struct inode *inode;
-
 
   /* Check whether this inode is already open. */
   for (e = list_begin (&open_inodes); e != list_end (&open_inodes);
@@ -188,7 +186,9 @@ inode_open (block_sector_t sector)
   inode->open_cnt = 1;
   inode->deny_write_cnt = 0;
   inode->removed = false;
-  block_read (fs_device, inode->sector, &inode->data);  
+  block_read (fs_device, inode->sector, &inode->data); 
+
+  // printf("inode open: %d\n", sector);
   return inode;
 }
 
@@ -218,14 +218,14 @@ inode_close (struct inode *inode)
   if (inode == NULL)
     return;
 
-  // printf("\nclosing inode\n");
+  // printf("freed inode open_cnt: %d, sector: %d\n", inode->open_cnt, inode->sector);
 
   /* Release resources if this was the last opener. */
   if (--inode->open_cnt == 0)
     {
       /* Remove from inode list and release lock. */
       list_remove (&inode->elem);
- 
+
       /* Deallocate blocks if removed. */
       if (inode->removed) 
         {
@@ -543,5 +543,6 @@ inode_length (const struct inode *inode)
 bool
 inode_get_removed (const struct inode *inode)
 {
+  ASSERT(inode != NULL);
   return inode->removed;
 }

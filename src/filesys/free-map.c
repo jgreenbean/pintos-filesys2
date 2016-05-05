@@ -34,6 +34,7 @@ free_map_allocate (size_t cnt, block_sector_t *sectorp)
     {
       bitmap_set_multiple (free_map, sector, cnt, false); 
       sector = BITMAP_ERROR;
+      ASSERT(0);
     }
   if (sector != BITMAP_ERROR)
     *sectorp = sector;

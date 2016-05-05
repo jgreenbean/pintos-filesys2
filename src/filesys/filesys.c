@@ -65,12 +65,16 @@ static struct dir* get_dir(const char* file, char* file_name) {
     //     goto done;
     //   }
     // }
-    // printf("\nTHREAD NAME: %s\n", thread_current()->name);
+
     parent_dir = dir_reopen(thread_current()->cur_dir);
+    if(parent_dir == NULL) {
+      goto done;
+    }
 
     // then make new directory
     token = strtok_r(dir_cpy, "/", &save_ptr);
     while(token != NULL) {
+      // printf("token: %s, parent_dir: %p, cur_dir: %p\n", token, parent_dir, thread_current()->cur_dir);
       strlcpy(file_name, token, strlen(token) + 1);
       if(!dir_lookup(parent_dir, token, &child_inode)) { // parent_dir is parent, token is new dir
         if((token = strtok_r(NULL, "/", &save_ptr)) == NULL) {
@@ -139,6 +143,7 @@ filesys_create (const char *name, off_t initial_size)
   if(file_name == NULL) {
     return false;
   }
+  // printf("filesys create name: %s\n", name);
   struct dir *dir = get_dir(name, file_name);
   // printf("file name: %s, cur_dir: %s\n", file_name, thread_current()->cur_dir);
   bool success = (dir != NULL
@@ -146,11 +151,14 @@ filesys_create (const char *name, off_t initial_size)
                   && inode_create (inode_sector, initial_size)
                   && dir_add (dir, file_name, inode_sector, false));
 
+  // printf("create new file: %s, sector: %d\n", name, inode_sector);
+
+  // printf("file name: %s, success: %d, inode_sector: %d\n", file_name, success, inode_sector);
+
   if (!success && inode_sector != 0) { 
     free_map_release (inode_sector, 1);
   }
   dir_close (dir);
-  // printf("file name: %s, success: %d\n", file_name, success);
 
   palloc_free_page(file_name);
   return success;
@@ -194,6 +202,7 @@ filesys_remove (const char *name)
   if(file_name == NULL)
     return NULL;
   struct dir *dir = get_dir(name, file_name);
+  // printf("filesys remove file_name: %s\n", file_name);
   bool success = dir != NULL && dir_remove (dir, file_name);
   dir_close (dir); 
   palloc_free_page(file_name);
