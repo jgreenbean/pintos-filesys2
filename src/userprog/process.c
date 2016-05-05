@@ -64,10 +64,10 @@ start_process (void *file_name_)
   if_.gs = if_.fs = if_.es = if_.ds = if_.ss = SEL_UDSEG;
   if_.cs = SEL_UCSEG;
   if_.eflags = FLAG_IF | FLAG_MBS;
+  thread_current()->cur_dir = dir_reopen(thread_current()->parent_process->cur_dir);
   success = load (file_name, &if_.eip, &if_.esp);
   thread_current()->parent_process->success = success;
   thread_current()->parent_process->child_pid = thread_current()->pid;
-  thread_current()->cur_dir = dir_reopen(thread_current()->parent_process->cur_dir);
 
   /* If load failed, quit. */
   palloc_free_page (file_name);

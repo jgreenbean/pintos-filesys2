@@ -160,6 +160,7 @@ inode_create (block_sector_t sector, off_t length)
 struct inode *
 inode_open (block_sector_t sector)
 {
+  // printf("\nopening inode\n");
   struct list_elem *e;
   struct inode *inode;
 
@@ -216,6 +217,8 @@ inode_close (struct inode *inode)
   /* Ignore null pointer. */
   if (inode == NULL)
     return;
+
+  // printf("\nclosing inode\n");
 
   /* Release resources if this was the last opener. */
   if (--inode->open_cnt == 0)

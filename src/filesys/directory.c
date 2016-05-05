@@ -48,12 +48,14 @@ dir_open (struct inode *inode)
       }
       inode_close (inode);
       free (dir);
+      printf("\ninode was removed. removed == %d. dir: %p. inode: %p\n", inode_get_removed(inode), dir, inode);
       return NULL;
     }
   else
     {
       inode_close (inode);
       free (dir);
+      printf("\ndir was null\n");
       return NULL; 
     }
 }
@@ -80,6 +82,7 @@ dir_close (struct dir *dir)
 {
   if (dir != NULL)
     {
+      // printf("closing a dir\n");
       inode_close (dir->inode);
       free (dir);
     }
@@ -211,13 +214,13 @@ dir_remove (struct dir *dir, const char *name)
   if (inode == NULL)
     goto done;
 
+  printf("inode: %p\n", inode);
   if(e.is_dir) {
     struct dir_entry e_entry;
     off_t e_pos = 0;
 
     while (inode_read_at (inode, &e_entry, sizeof e_entry, e_pos) == sizeof e) 
     {
-      // printf("name: %s\n", e_entry.name);
       e_pos += sizeof e_entry;
       if (e_entry.in_use && strcmp(e_entry.name, ".") && strcmp(e_entry.name, ".."))
         {

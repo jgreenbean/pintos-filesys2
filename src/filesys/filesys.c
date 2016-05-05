@@ -65,7 +65,7 @@ static struct dir* get_dir(const char* file, char* file_name) {
     //     goto done;
     //   }
     // }
-
+    // printf("\nTHREAD NAME: %s\n", thread_current()->name);
     parent_dir = dir_reopen(thread_current()->cur_dir);
 
     // then make new directory
@@ -136,8 +136,9 @@ filesys_create (const char *name, off_t initial_size)
   // look for directory in here instead of syscall 
   block_sector_t inode_sector = 0;
   char* file_name = palloc_get_page(PAL_ZERO);
-  if(file_name == NULL)
+  if(file_name == NULL) {
     return false;
+  }
   struct dir *dir = get_dir(name, file_name);
   // printf("file name: %s, cur_dir: %s\n", file_name, thread_current()->cur_dir);
   bool success = (dir != NULL
@@ -145,8 +146,9 @@ filesys_create (const char *name, off_t initial_size)
                   && inode_create (inode_sector, initial_size)
                   && dir_add (dir, file_name, inode_sector, false));
 
-  if (!success && inode_sector != 0) 
+  if (!success && inode_sector != 0) { 
     free_map_release (inode_sector, 1);
+  }
   dir_close (dir);
   // printf("file name: %s, success: %d\n", file_name, success);
 
