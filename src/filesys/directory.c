@@ -211,8 +211,6 @@ dir_remove (struct dir *dir, const char *name)
   if (!lookup (dir, name, &e, &ofs))
     goto done;
 
-  // printf("dir remove name: %s, sector: %d\n", name, e.inode_sector);
-
   /* Open inode. */
   inode = inode_open (e.inode_sector);
   if (inode == NULL)

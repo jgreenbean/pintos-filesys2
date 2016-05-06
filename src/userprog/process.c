@@ -102,7 +102,6 @@ process_wait (tid_t child_tid)
   struct list_elem *e;
   struct thread* child;
   struct zombie *z;
-  int old;
   int status;
 
   // old = intr_disable();

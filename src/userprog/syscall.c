@@ -490,7 +490,6 @@ bool remove (const char *file){
     exit(-1);
   } 
   bool success = filesys_remove(file);
-  // printf("remove file: %s success: %d\n", file, success);         
   // lock_release(&file_lock);
 	return success;
 }
@@ -504,7 +503,6 @@ int open (const char *file){
   char* dir_name;
 
   lock_acquire(&file_lock);
-  // printf("file: %s\n", file);
   if (!is_valid(file)) {
     lock_release(&file_lock);
     exit(-1);
@@ -792,8 +790,6 @@ bool mkdir(const char *dir) {
   if(!strcmp(dir, ""))
     return false;
 
-  // printf("mkdir file: %s\n", dir);
-
   dir_cpy = palloc_get_page(PAL_ZERO);
   child_tok = palloc_get_page(PAL_ZERO);
   // cur_cpy = palloc_get_page(PAL_ZERO);
@@ -947,6 +943,7 @@ bool chdir(const char *dir) {
     success = false;
     goto done;
   }
+
   // absolute path
   if(dir[0] == '/') {  // absolute path
     parent_dir = dir_open_root();

@@ -166,7 +166,6 @@ inode_open (block_sector_t sector)
   struct list_elem *e;
   struct inode *inode;
 
-
   /* Check whether this inode is already open. */
   for (e = list_begin (&open_inodes); e != list_end (&open_inodes);
        e = list_next (e)) 
@@ -194,7 +193,6 @@ inode_open (block_sector_t sector)
   lock_init(&inode->rw_lock);
   block_read (fs_device, inode->sector, &inode->data); 
 
-  // printf("inode open: %d\n", sector);
   return inode;
 }
 
