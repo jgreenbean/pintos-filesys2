@@ -14,6 +14,32 @@ struct block *fs_device;
 
 static void do_format (void);
 
+struct inode_disk
+  {
+    off_t length;                       /* File size in bytes. */
+    unsigned magic;                     /* Magic number. */
+    block_sector_t indirect_block;      /* 2nd level indirection block. */
+    uint32_t unused[125];               /* Not used. */
+  };
+
+struct inode 
+  {
+    struct list_elem elem;              /* Element in inode list. */
+    block_sector_t sector;              /* Sector number of disk location. */
+    int open_cnt;                       /* Number of openers. */
+    bool removed;                       /* True if deleted, false otherwise. */
+    int deny_write_cnt;                 /* 0: writes ok, >0: deny writes. */
+    struct lock inode_lock;             /* Create/Remove lock for this inode */
+    struct lock rw_lock;                /* Read/Write lock for this inode*/
+    struct inode_disk data;             /* Inode content. */
+  };
+
+struct dir 
+  {
+    struct inode *inode;                /* Backing store. */
+    off_t pos;                          /* Current position. */
+  };
+
 static struct dir* get_dir(const char* file, char* file_name) {
   char *dir_cpy, *token, *save_ptr;
   struct inode* child_inode;
@@ -137,24 +163,23 @@ filesys_done (void)
 bool
 filesys_create (const char *name, off_t initial_size) 
 {
+  bool success = false;
   // look for directory in here instead of syscall 
   block_sector_t inode_sector = 0;
   char* file_name = palloc_get_page(PAL_ZERO);
   if(file_name == NULL) {
     return false;
   }
-  // printf("filesys create name: %s\n", name);
   struct dir *dir = get_dir(name, file_name);
-  // printf("file name: %s, cur_dir: %s\n", file_name, thread_current()->cur_dir);
-  bool success = (dir != NULL
-                  && free_map_allocate (1, &inode_sector)
-                  && inode_create (inode_sector, initial_size)
-                  && dir_add (dir, file_name, inode_sector, false));
 
-  // printf("create new file: %s, sector: %d\n", name, inode_sector);
-
-  // printf("file name: %s, success: %d, inode_sector: %d\n", file_name, success, inode_sector);
-
+  if(dir) {
+    lock_acquire(&dir->inode->inode_lock);
+    success = (dir != NULL
+                    && free_map_allocate (1, &inode_sector)
+                    && inode_create (inode_sector, initial_size)
+                    && dir_add (dir, file_name, inode_sector, false));
+    lock_release(&dir->inode->inode_lock);
+  }
   if (!success && inode_sector != 0) { 
     free_map_release (inode_sector, 1);
   }
@@ -198,12 +223,16 @@ filesys_open (const char *name)
 bool
 filesys_remove (const char *name) 
 {
+  bool success = false;
   char* file_name = palloc_get_page(PAL_ZERO);
   if(file_name == NULL)
     return NULL;
   struct dir *dir = get_dir(name, file_name);
-  // printf("filesys remove file_name: %s\n", file_name);
-  bool success = dir != NULL && dir_remove (dir, file_name);
+  if(dir) {
+    lock_acquire(&dir->inode->inode_lock);
+    success = dir != NULL && dir_remove (dir, file_name);
+    lock_release(&dir->inode->inode_lock);
+  }
   dir_close (dir); 
   palloc_free_page(file_name);
   return success;

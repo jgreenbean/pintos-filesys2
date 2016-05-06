@@ -322,6 +322,7 @@ thread_exit (void)
   ASSERT (!intr_context ());
 
 #ifdef USERPROG
+  sema_down(&thread_current()->wait_sema);
   process_exit ();
 #endif
 
@@ -540,6 +541,7 @@ init_thread (struct thread *t, const char *name, int priority)
   sema_init(&t->sema, 0);
   sema_init(&t->exec_sema, 0);
   sema_init(&t->process_sema, 0);
+  sema_init(&t->wait_sema, 0);
 
   old_level = intr_disable();
   list_insert_ordered(&all_list, &t->allelem, 

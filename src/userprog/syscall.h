@@ -15,5 +15,8 @@ struct dir_entry;
 void syscall_init (void);
 uint32_t* lookup_page (uint32_t*, const void*, bool);
 void exit (int status);
+struct lock exit_lock;
+// struct lock wait_lock;
+
 
 #endif /* userprog/syscall.h */

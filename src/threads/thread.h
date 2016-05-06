@@ -150,6 +150,7 @@ struct thread
     struct thread *parent_process;      /*The parent process that created this thread.*/
     struct semaphore exec_sema;         /*Wait for child to successfully load new program.*/
     struct semaphore process_sema;      /*Block waiting thread until child exits.*/
+    struct semaphore wait_sema;         /*Block exiting thread until parent reaps.*/
     struct list_elem child_elem;        /*List element for children list.*/
     int wait_flag;                      /*Set when wait() is called.*/
     struct file *exec_file;             /*File that is loaded in exec().*/

@@ -7,6 +7,7 @@
 #include "filesys/free-map.h"
 #include "threads/malloc.h"
 #include "userprog/syscall.h"
+#include "threads/synch.h"
 #include <stdio.h>
 
 /* Identifies an inode. */
@@ -43,6 +44,8 @@ struct inode
     int open_cnt;                       /* Number of openers. */
     bool removed;                       /* True if deleted, false otherwise. */
     int deny_write_cnt;                 /* 0: writes ok, >0: deny writes. */
+    struct lock inode_lock;             /* Create/Remove lock for this inode */
+    struct lock rw_lock;                /* Read/Write lock for this inode*/
     struct inode_disk data;             /* Inode content. */
   };
 
@@ -163,6 +166,7 @@ inode_open (block_sector_t sector)
   struct list_elem *e;
   struct inode *inode;
 
+
   /* Check whether this inode is already open. */
   for (e = list_begin (&open_inodes); e != list_end (&open_inodes);
        e = list_next (e)) 
@@ -186,6 +190,8 @@ inode_open (block_sector_t sector)
   inode->open_cnt = 1;
   inode->deny_write_cnt = 0;
   inode->removed = false;
+  lock_init(&inode->inode_lock);
+  lock_init(&inode->rw_lock);
   block_read (fs_device, inode->sector, &inode->data); 
 
   // printf("inode open: %d\n", sector);
@@ -217,8 +223,6 @@ inode_close (struct inode *inode)
   /* Ignore null pointer. */
   if (inode == NULL)
     return;
-
-  // printf("freed inode open_cnt: %d, sector: %d\n", inode->open_cnt, inode->sector);
 
   /* Release resources if this was the last opener. */
   if (--inode->open_cnt == 0)
@@ -278,10 +282,12 @@ inode_remove (struct inode *inode)
 off_t
 inode_read_at (struct inode *inode, void *buffer_, off_t size, off_t offset) 
 {
+  lock_acquire(&inode->rw_lock);
   uint8_t *buffer = buffer_;
   off_t bytes_read = 0;
   uint8_t *bounce = NULL;
   if(offset + size > inode_length(inode)) {
+    lock_release(&inode->rw_lock);
     return bytes_read;      
   }
   
@@ -326,11 +332,13 @@ inode_read_at (struct inode *inode, void *buffer_, off_t size, off_t offset)
       bytes_read += chunk_size;
     }
   free (bounce);
+  lock_release(&inode->rw_lock);
   return bytes_read;
 }
 
 bool inode_grow_file(struct inode* inode, block_sector_t new_sector) {
   // get last data block
+  lock_acquire(&inode->rw_lock);
   block_sector_t last_sector = inode_length(inode) / BLOCK_SECTOR_SIZE; // last block sector
   block_sector_t index_block = last_sector / SECTORS_PER_BLOCK; // last index block sector
   block_sector_t data_block = last_sector - (index_block * SECTORS_PER_BLOCK); // last data block within last index block
@@ -340,14 +348,18 @@ bool inode_grow_file(struct inode* inode, block_sector_t new_sector) {
     block_sector_t new_block_sector;
 
     // check conditions and allocate for new index block
-    if(index_block == 0 || !free_map_allocate(1, &new_block_sector))
+    if(index_block == 0 || !free_map_allocate(1, &new_block_sector)) {
+      lock_release(&inode->rw_lock);
       return false;
+    }
 
     // add to indirect/index block
     block_sector_t* new_data = malloc(BLOCK_SECTOR_SIZE); // new block within new index block
     index_block_sectors = malloc(BLOCK_SECTOR_SIZE);
-    if(new_data == NULL || index_block_sectors == NULL)
+    if(new_data == NULL || index_block_sectors == NULL) {
+      lock_release(&inode->rw_lock);
       return false;
+    }
 
     block_read(fs_device, inode->data.indirect_block, index_block_sectors);
     // update new index block
@@ -363,6 +375,7 @@ bool inode_grow_file(struct inode* inode, block_sector_t new_sector) {
     block_sector_t* data = malloc(BLOCK_SECTOR_SIZE);
     index_block_sectors = malloc(BLOCK_SECTOR_SIZE);
     if(data == NULL || index_block_sectors == NULL) {
+      lock_release(&inode->rw_lock);
       return false;
     }
     block_read(fs_device, inode->data.indirect_block, index_block_sectors);
@@ -373,6 +386,7 @@ bool inode_grow_file(struct inode* inode, block_sector_t new_sector) {
     free(data);
     free(index_block_sectors);
   }
+  lock_release(&inode->rw_lock);
   return true;
 }
 

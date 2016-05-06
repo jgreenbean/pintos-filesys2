@@ -38,6 +38,8 @@ struct inode
     int open_cnt;                       /* Number of openers. */
     bool removed;                       /* True if deleted, false otherwise. */
     int deny_write_cnt;                 /* 0: writes ok, >0: deny writes. */
+    struct lock inode_lock;             /* Create/Remove lock for this inode */
+    struct lock rw_lock;                /* Read/Write lock for this inode*/
     struct inode_disk data;             /* Inode content. */
   };
 
@@ -72,12 +74,12 @@ bool is_valid(const void *pointer);
 
 // Lock variable
 static struct lock file_lock;
-static struct lock exit_lock;
 
 void syscall_init (void) {
   intr_register_int (0x30, 3, INTR_ON, syscall_handler, "syscall");
   lock_init(&file_lock);
   lock_init(&exit_lock);
+  // lock_init(&wait_lock);
 }
 
 static struct dir* get_dir(const char* file, char* file_name) {
@@ -110,8 +112,10 @@ static struct dir* get_dir(const char* file, char* file_name) {
         }
       }
       token = strtok_r(NULL, "/", &save_ptr);
-      if(token == NULL)
+      if(token == NULL) {
+        inode_close(child_inode);
         goto done;
+      }
       dir_close(parent_dir);
       parent_dir = dir_open(child_inode);  // open next directory
       if(parent_dir == NULL) {
@@ -152,8 +156,10 @@ static struct dir* get_dir(const char* file, char* file_name) {
       }
       // save prev token
       token = strtok_r(NULL, "/", &save_ptr);
-      if(token == NULL)
+      if(token == NULL) {
+        inode_close(child_inode);
         goto done;
+      }
       dir_close(parent_dir);
       parent_dir = dir_open(child_inode);  // open next directory
       if(parent_dir == NULL) {
@@ -404,7 +410,9 @@ void exit (int status) {
   {
     c = list_entry(e, struct thread, child_elem);
     c->parent_process = NULL;
+    sema_up(&c->wait_sema);
   }
+
   lock_release(&exit_lock);
 
   /*Rebecca Drove Here*/
@@ -464,26 +472,26 @@ int wait (pid_t pid) {
 
 bool create (const char *file, unsigned initial_size){
   /*Rebecca Drove here*/
-  lock_acquire(&file_lock);
+  // lock_acquire(&file_lock);
   if (!is_valid(file)) {
-    lock_release(&file_lock);
+    // lock_release(&file_lock);
     exit(-1);
   }
   bool success = filesys_create(file, initial_size);
-  lock_release(&file_lock);
+  // lock_release(&file_lock);
   return success;
 }
 
 bool remove (const char *file){
   /*Jasmine Drove here*/
-  lock_acquire(&file_lock);
+  // lock_acquire(&file_lock);
   if (!is_valid(file)) {
-    lock_release(&file_lock);
+    // lock_release(&file_lock);
     exit(-1);
   } 
   bool success = filesys_remove(file);
   // printf("remove file: %s success: %d\n", file, success);         
-  lock_release(&file_lock);
+  // lock_release(&file_lock);
 	return success;
 }
 
@@ -573,7 +581,7 @@ int filesize (int fd){
     exit(-1);
   }
 
-  lock_acquire(&file_lock);
+  // lock_acquire(&file_lock);
 
   for (e = list_begin (&thread_current()->open_files); 
    e != list_end (&thread_current()->open_files);
@@ -585,7 +593,7 @@ int filesize (int fd){
       break;
     }
   }
-  lock_release(&file_lock);
+  // lock_release(&file_lock);
   return size;
 }
 
@@ -595,15 +603,15 @@ int read (int fd, void *buffer, unsigned size){
   struct list_elem* e;
   struct open_file* of;
 
-  lock_acquire(&file_lock);
+  // lock_acquire(&file_lock);
   if(!is_valid(buffer) || fd == 1) {
-    lock_release(&file_lock);
+    // lock_release(&file_lock);
     exit(-1);
   }
   if(!fd) {
     // read from keyboard
     num_bytes = input_getc();
-    lock_release(&file_lock);
+    // lock_release(&file_lock);
     return num_bytes;
   }
   else {
@@ -618,7 +626,7 @@ int read (int fd, void *buffer, unsigned size){
       }     
     }
   }
-  lock_release(&file_lock);
+  // lock_release(&file_lock);
   return num_bytes;
 }
 
@@ -633,9 +641,9 @@ int write (int fd, const void *buffer, unsigned size) {
     exit(-1);
   }
 
-  lock_acquire(&file_lock);
+  // lock_acquire(&file_lock);
   if (!is_valid(buffer)) {
-    lock_release(&file_lock);
+    // lock_release(&file_lock);
     exit(-1);
   } 
   if(fd == 1) {
@@ -658,7 +666,7 @@ int write (int fd, const void *buffer, unsigned size) {
       of = list_entry(e, struct open_file, file_elem);
       if(of->fd == fd) {
         if(of->f == NULL) {
-          lock_release(&file_lock);
+          // lock_release(&file_lock);
           exit(-1);
         }
         if(!(of->f->deny_write)) {
@@ -668,7 +676,7 @@ int write (int fd, const void *buffer, unsigned size) {
       }
     }
   }
-  lock_release(&file_lock);
+  // lock_release(&file_lock);
 	return num_bytes;
 }
 
@@ -681,7 +689,7 @@ void seek (int fd, unsigned position){
     exit(-1);
   }
 
-  lock_acquire(&file_lock);
+  // lock_acquire(&file_lock);
 
   for(e = list_begin (&thread_current()->open_files); 
   e != list_end (&thread_current()->open_files);
@@ -689,11 +697,12 @@ void seek (int fd, unsigned position){
   {
     of = list_entry(e, struct open_file, file_elem);
     if(of->fd == fd) {
-      file_seek(of->f, position);
+      if(of->f != NULL)
+        file_seek(of->f, position);
       break;
     }
   }
-  lock_release(&file_lock);
+  // lock_release(&file_lock);
 }
 
 unsigned tell (int fd){
@@ -706,7 +715,7 @@ unsigned tell (int fd){
     exit(-1); 
   } 
   
-  lock_acquire(&file_lock); 
+  // lock_acquire(&file_lock); 
 
   for (e = list_begin (&thread_current()->open_files); 
     e != list_end (&thread_current()->open_files); 
@@ -714,11 +723,12 @@ unsigned tell (int fd){
     { 
       of = list_entry(e, struct open_file, file_elem); 
       if(of->fd == fd) { 
-        next_byte = file_tell(of->f); 
+        if(of->f != NULL)
+          next_byte = file_tell(of->f); 
         break; 
       } 
     } 
-  lock_release(&file_lock); 
+  // lock_release(&file_lock); 
   return next_byte;
 }
 
@@ -871,8 +881,10 @@ bool mkdir(const char *dir) {
     }
   }
 
+  lock_acquire(&parent_dir->inode->inode_lock);
   if(!free_map_allocate(1, &dir_sector)) { // allocate new sector 
     success = false;
+    lock_release(&parent_dir->inode->inode_lock);
     goto done;
   }
 
@@ -880,8 +892,12 @@ bool mkdir(const char *dir) {
     || !dir_add(parent_dir, child_tok, dir_sector, true)
     || !dir_lookup(parent_dir, child_tok, &new_inode)) {
     success = false;
+    free_map_release (dir_sector, 1);
+    lock_release(&parent_dir->inode->inode_lock);
     goto done;
   }
+  lock_release(&parent_dir->inode->inode_lock);
+
 
   // printf("mkdir dir: %s, new sector: %d\n", dir, dir_sector);
 

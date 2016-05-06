@@ -105,27 +105,28 @@ process_wait (tid_t child_tid)
   int old;
   int status;
 
-  old = intr_disable();
+  // old = intr_disable();
   // check if inside children list
   for (e = list_begin (&thread_current()->children); 
        e != list_end (&thread_current()->children);
        e = list_next (e)) 
   {
       child = list_entry (e, struct thread, child_elem);
+      // printf("\nchild thread: %p\n\n", &child);
       //Check if thread is valid
       if(child->tid == child_tid) {
         if(child->wait_flag) {
+          // intr_set_level(old);
           return -1;
         }
         child->wait_flag = 1;
 
         // intr_set_level(old);
         sema_down(&child->process_sema); // block
-        intr_set_level(old);
+        sema_up(&child->wait_sema);
         break;
       }
   }
-  intr_set_level(old);
 
   /*Rebecca, Jasmine Drove Here*/
   // check if inside zombie list
@@ -138,9 +139,11 @@ process_wait (tid_t child_tid)
       status = z->exit_status;
       list_remove(&z->z_elem);
       palloc_free_page(z);
+      // intr_set_level(old);
       return status;
     }
   }
+  // intr_set_level(old);
   return -1; // invalid wait call
 }
 
