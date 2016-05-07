@@ -123,19 +123,7 @@ static struct dir* get_dir(const char* file, char* file_name) {
       }
     }
   }
-  else {  // relative path
-    // strlcpy(cur_cpy, thread_current()->cur_dir, strlen(thread_current()->cur_dir) + 1);
-    // // first get to directory of process
-    // for(token = strtok_r(cur_cpy, "/", &save_ptr); token != NULL; 
-    //   token = strtok_r(NULL, "/", &save_ptr)) {
-    //   dir_lookup(parent_dir, token, &child_inode); // parent_dir is parent, token is new dir
-    //   dir_close(parent_dir);
-    //   parent_dir = dir_open(child_inode);  // open next directory
-    //   if(parent_dir == NULL) {
-    //     goto done;
-    //   }
-    // }
-
+  else {  
     parent_dir = dir_reopen(thread_current()->cur_dir);
     if(parent_dir == NULL) {
       goto done;
@@ -168,7 +156,6 @@ static struct dir* get_dir(const char* file, char* file_name) {
     }
   }
   done:
-    // palloc_free_page(cur_cpy);
     palloc_free_page(dir_cpy);
 
   return parent_dir;
@@ -472,25 +459,19 @@ int wait (pid_t pid) {
 
 bool create (const char *file, unsigned initial_size){
   /*Rebecca Drove here*/
-  // lock_acquire(&file_lock);
   if (!is_valid(file)) {
-    // lock_release(&file_lock);
     exit(-1);
   }
   bool success = filesys_create(file, initial_size);
-  // lock_release(&file_lock);
   return success;
 }
 
 bool remove (const char *file){
   /*Jasmine Drove here*/
-  // lock_acquire(&file_lock);
   if (!is_valid(file)) {
-    // lock_release(&file_lock);
     exit(-1);
   } 
   bool success = filesys_remove(file);
-  // lock_release(&file_lock);
 	return success;
 }
 
@@ -508,14 +489,6 @@ int open (const char *file){
     exit(-1);
   }
 
-  // of = palloc_get_page(PAL_ZERO);
-  // if (of == NULL) {
-  //   palloc_free_page(dir_name);
-  //   lock_release(&file_lock);
-  //   exit(-1);
-  // }
-  // of->fd = thread_current()->fd_cnt;
-
   f = filesys_open(file);
 
   if(f == NULL) {
@@ -529,7 +502,6 @@ int open (const char *file){
       }
       dir = get_dir(file, dir_name);
       if (dir == NULL) {
-        //palloc_free_page(of);
         palloc_free_page(dir_name);
         lock_release(&file_lock);
         return -1;
@@ -538,23 +510,16 @@ int open (const char *file){
       dir_close(dir);
       dir = dir_open(dir_inode);
       if(dir == NULL) {
-        //palloc_free_page(of);
         palloc_free_page(dir_name);
         lock_release(&file_lock);
         return -1;
       }
       palloc_free_page(dir_name);
     }
-  //   of->d = dir;
-  //   of->f = NULL;
-  // } else {
-  //   of->f = f;
-  //   of->d = NULL;
   }
 
   of = palloc_get_page(PAL_ZERO);
   if (of == NULL) {
-    // palloc_free_page(dir_name);
     lock_release(&file_lock);
     exit(-1);
   }
@@ -564,7 +529,6 @@ int open (const char *file){
 
   thread_current()->fd_cnt++;
   list_push_back(&thread_current()->open_files, &of->file_elem);
-  // palloc_free_page(dir_name);
   lock_release(&file_lock);
 	return of->fd;
 }
@@ -579,8 +543,6 @@ int filesize (int fd){
     exit(-1);
   }
 
-  // lock_acquire(&file_lock);
-
   for (e = list_begin (&thread_current()->open_files); 
    e != list_end (&thread_current()->open_files);
    e = list_next (e)) 
@@ -591,7 +553,6 @@ int filesize (int fd){
       break;
     }
   }
-  // lock_release(&file_lock);
   return size;
 }
 
@@ -601,15 +562,12 @@ int read (int fd, void *buffer, unsigned size){
   struct list_elem* e;
   struct open_file* of;
 
-  // lock_acquire(&file_lock);
   if(!is_valid(buffer) || fd == 1) {
-    // lock_release(&file_lock);
     exit(-1);
   }
   if(!fd) {
     // read from keyboard
     num_bytes = input_getc();
-    // lock_release(&file_lock);
     return num_bytes;
   }
   else {
@@ -624,7 +582,6 @@ int read (int fd, void *buffer, unsigned size){
       }     
     }
   }
-  // lock_release(&file_lock);
   return num_bytes;
 }
 
@@ -639,9 +596,7 @@ int write (int fd, const void *buffer, unsigned size) {
     exit(-1);
   }
 
-  // lock_acquire(&file_lock);
   if (!is_valid(buffer)) {
-    // lock_release(&file_lock);
     exit(-1);
   } 
   if(fd == 1) {
@@ -655,7 +610,7 @@ int write (int fd, const void *buffer, unsigned size) {
     putbuf(buffer, (int) size);
     num_bytes = written_chars();
   }
-  /*Chalres Drove Here*/
+  /*Charles Drove Here*/
   else {
     for (e = list_begin (&thread_current()->open_files); 
     e != list_end (&thread_current()->open_files);
@@ -664,7 +619,6 @@ int write (int fd, const void *buffer, unsigned size) {
       of = list_entry(e, struct open_file, file_elem);
       if(of->fd == fd) {
         if(of->f == NULL) {
-          // lock_release(&file_lock);
           exit(-1);
         }
         if(!(of->f->deny_write)) {
@@ -674,7 +628,6 @@ int write (int fd, const void *buffer, unsigned size) {
       }
     }
   }
-  // lock_release(&file_lock);
 	return num_bytes;
 }
 
@@ -687,7 +640,6 @@ void seek (int fd, unsigned position){
     exit(-1);
   }
 
-  // lock_acquire(&file_lock);
 
   for(e = list_begin (&thread_current()->open_files); 
   e != list_end (&thread_current()->open_files);
@@ -700,7 +652,6 @@ void seek (int fd, unsigned position){
       break;
     }
   }
-  // lock_release(&file_lock);
 }
 
 unsigned tell (int fd){
@@ -713,7 +664,6 @@ unsigned tell (int fd){
     exit(-1); 
   } 
   
-  // lock_acquire(&file_lock); 
 
   for (e = list_begin (&thread_current()->open_files); 
     e != list_end (&thread_current()->open_files); 
@@ -726,7 +676,6 @@ unsigned tell (int fd){
         break; 
       } 
     } 
-  // lock_release(&file_lock); 
   return next_byte;
 }
 
@@ -830,20 +779,7 @@ bool mkdir(const char *dir) {
       }
     }
   }
-  else {  // relative path
-    // strlcpy(cur_cpy, thread_current()->cur_dir, strlen(thread_current()->cur_dir) + 1);
-    // // first get to directory of process
-    // for(token = strtok_r(cur_cpy, "/", &save_ptr); token != NULL; 
-    //   token = strtok_r(NULL, "/", &save_ptr)) {
-    //   dir_lookup(parent_dir, token, &child_inode); // parent_dir is parent, token is new dir
-    //   dir_close(parent_dir);
-    //   parent_dir = dir_open(child_inode);  // open next directory
-    //   if(parent_dir == NULL) {
-    //     success = false;
-    //     goto done;
-    //   }
-    // }
-
+  else {  
     parent_dir = dir_reopen(thread_current()->cur_dir);
 
     // then make new directory
@@ -851,7 +787,6 @@ bool mkdir(const char *dir) {
     while(token != NULL) {
       strlcpy(child_tok, token, strlen(token) + 1);
       if(!dir_lookup(parent_dir, token, &child_inode)) { // parent_dir is parent, token is new dir
-        // strlcpy(child_tok, token, strlen(token) + 1);
         if((token = strtok_r(NULL, "/", &save_ptr)) == NULL) {
           break;
         }
@@ -893,13 +828,6 @@ bool mkdir(const char *dir) {
     goto done;
   }
   lock_release(&parent_dir->inode->inode_lock);
-
-
-  // printf("mkdir dir: %s, new sector: %d\n", dir, dir_sector);
-
-  // dir_create(dir_sector, 2);  // create new directory
-  // dir_add(parent_dir, child_tok, dir_sector, true);  // add new directory to parent
-  // dir_lookup(parent_dir, child_tok, &new_inode);  // get new directory's inode
   new_dir = dir_open(new_inode);  // open new directory
   if(new_dir == NULL) {
     success = false;
@@ -911,14 +839,11 @@ bool mkdir(const char *dir) {
     success = false;
     goto done;
   }
-  // if(!strcmp(child_tok, "dir33"))
-  // printf("name: %s, inode: %p\n", child_tok, new_inode);
 
   dir_close(new_dir);
   dir_close(parent_dir);
 
   done:
-//    palloc_free_page(cur_cpy);
     palloc_free_page(dir_cpy);
     palloc_free_page(child_tok);
 
@@ -934,7 +859,6 @@ bool chdir(const char *dir) {
   struct inode* child_inode;
   struct dir* parent_dir;
   bool success = true;
-  // int cur_dir_len = 0;
 
   valid_pointer(dir);
 
@@ -968,20 +892,6 @@ bool chdir(const char *dir) {
     }
   }
   else {
-    // strlcpy(dir_cpy, thread_current()->cur_dir, strlen(thread_current()->cur_dir) + 1);
-    // for(token = strtok_r(dir_cpy, "/", &save_ptr); token != NULL; 
-    // token = strtok_r(NULL, "/", &save_ptr)) {
-    //   dir_lookup(parent_dir, token, &child_inode); // parent_dir is parent, token is new dir
-    //   dir_close(parent_dir);
-    //   parent_dir = dir_open(child_inode);  // open next directory
-    //   if(parent_dir == NULL) {
-    //     success = false;
-    //     goto done;
-    //   }
-    // }
-    // palloc_free_page(dir_cpy);
-
-    // printf("cur_dir open count: %d\n", thread_current()->cur_dir->inode->open_cnt);
     parent_dir = dir_reopen(thread_current()->cur_dir);
 
     strlcpy(dir_cpy, dir, PGSIZE);
@@ -993,22 +903,12 @@ bool chdir(const char *dir) {
         goto done;
       } 
       dir_close(parent_dir);
-      // printf("chdir2 file: %s ", dir);
       parent_dir = dir_open(child_inode);  // open next directory
       if(parent_dir == NULL) {
         success = false;
         goto done;
       }
     }
-
-    // printf("child inode: %d\n", child_inode->sector);
-    // cur_dir_len = strlen(thread_current()->cur_dir);
-    // if(strcmp(thread_current()->cur_dir, "/")) {
-    //   strlcpy(thread_current()->cur_dir + cur_dir_len, "/", 2);
-    //   cur_dir_len++;
-    // }
-    // strlcpy(thread_current()->cur_dir + cur_dir_len, dir, strlen(dir) + 1);
-    // printf("cur_dir: %s\n", thread_current()->cur_dir);
   }  
 
   dir_close(thread_current()->cur_dir);

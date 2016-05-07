@@ -336,7 +336,6 @@ inode_read_at (struct inode *inode, void *buffer_, off_t size, off_t offset)
 
 bool inode_grow_file(struct inode* inode, block_sector_t new_sector) {
   // get last data block
-  lock_acquire(&inode->rw_lock);
   block_sector_t last_sector = inode_length(inode) / BLOCK_SECTOR_SIZE; // last block sector
   block_sector_t index_block = last_sector / SECTORS_PER_BLOCK; // last index block sector
   block_sector_t data_block = last_sector - (index_block * SECTORS_PER_BLOCK); // last data block within last index block
@@ -384,7 +383,6 @@ bool inode_grow_file(struct inode* inode, block_sector_t new_sector) {
     free(data);
     free(index_block_sectors);
   }
-  lock_release(&inode->rw_lock);
   return true;
 }
 
@@ -403,6 +401,7 @@ inode_write_at (struct inode *inode, const void *buffer_, off_t size,
   bool grew_file = false;
   int rem_gap = 0;
   int gap = 0;
+  bool extend = false;
 
   if(inode->deny_write_cnt)
     return 0;
@@ -440,6 +439,10 @@ inode_write_at (struct inode *inode, const void *buffer_, off_t size,
       return bytes_written;
     memset(gap_buffer, 0, BLOCK_SECTOR_SIZE);
 
+    if(offset + size > inode_length(inode)) {
+      lock_acquire(&inode->rw_lock);
+      extend = true;
+    }
     while(gap / BLOCK_SECTOR_SIZE > 0) {
       if(!free_map_allocate(1, &zero_sector))
         break;
@@ -521,6 +524,9 @@ inode_write_at (struct inode *inode, const void *buffer_, off_t size,
     }
   free (bounce);
   block_write(fs_device, inode->sector, &inode->data);
+  if(extend) {
+    lock_release(&inode->rw_lock);
+  }
   return bytes_written;
 }
 

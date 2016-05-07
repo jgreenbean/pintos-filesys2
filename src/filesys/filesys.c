@@ -46,12 +46,9 @@ static struct dir* get_dir(const char* file, char* file_name) {
   struct dir* parent_dir = NULL;
 
   dir_cpy = palloc_get_page(PAL_ZERO);
-  // cur_cpy = palloc_get_page(PAL_ZERO);
   if(dir_cpy == NULL) {
     goto done;
   }
-
-  // printf("get dir: %s\n", file);
 
   strlcpy(dir_cpy, file, strlen(file) + 1);
   if(dir_cpy[0] == '/') {  // absolute path
@@ -84,18 +81,6 @@ static struct dir* get_dir(const char* file, char* file_name) {
     }
   }
   else {  // relative path
-    // strlcpy(cur_cpy, thread_current()->cur_dir, strlen(thread_current()->cur_dir) + 1);
-    // // first get to directory of process
-    // for(token = strtok_r(cur_cpy, "/", &save_ptr); token != NULL; 
-    //   token = strtok_r(NULL, "/", &save_ptr)) {
-    //   dir_lookup(parent_dir, token, &child_inode); // parent_dir is parent, token is new dir
-    //   dir_close(parent_dir);
-    //   parent_dir = dir_open(child_inode);  // open next directory
-    //   if(parent_dir == NULL) {
-    //     goto done;
-    //   }
-    // }
-
     parent_dir = dir_reopen(thread_current()->cur_dir);
     if(parent_dir == NULL) {
       goto done;
@@ -104,7 +89,6 @@ static struct dir* get_dir(const char* file, char* file_name) {
     // then make new directory
     token = strtok_r(dir_cpy, "/", &save_ptr);
     while(token != NULL) {
-      // printf("token: %s, parent_dir: %p, cur_dir: %p\n", token, parent_dir, thread_current()->cur_dir);
       strlcpy(file_name, token, strlen(token) + 1);
       if(!dir_lookup(parent_dir, token, &child_inode)) { // parent_dir is parent, token is new dir
         if((token = strtok_r(NULL, "/", &save_ptr)) == NULL) {
@@ -130,7 +114,6 @@ static struct dir* get_dir(const char* file, char* file_name) {
     }
   }
   done:
-    // palloc_free_page(cur_cpy);
     palloc_free_page(dir_cpy);
 
   return parent_dir;
@@ -209,7 +192,6 @@ filesys_open (const char *name)
   struct inode *inode = NULL;
 
   if (dir != NULL) {
-    // printf("dir lookup\n");
     dir_lookup (dir, file_name, &inode);
     if (dir_isdir(dir, file_name)) {
       palloc_free_page(file_name);

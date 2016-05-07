@@ -1,101 +1,141 @@
-2/15, 5.00p - 10.00p Kaivan, Jorge 5 hours
+4/4 3:00pm-7:30pm Charles, Rebecca, and Jasmine, 3 1/2 hours
 Driver Order and Time Length:
-Jorge, 30 minutes
-Kaivan, 30 minutes
-Jorge, 30 minutes
-Kaivan, 30 minutes
-Jorge, 30 minutes
-Kaivan, 30 minutes
-Jorge, 30 minutes
-Kaivan, 30 minutes
-Jorge, 30 minutes
-Kaivan,30 minutes
+Charles, 30 minutes
+Rebecca, 30 minutes
+Jasmine, 30 minutes
+Charles, 30 minutes
+Rebecca, 30 minutes
+Jasmine, 30 minutes
+Charles, 30 minutes
 
-2/16, 6.00p - 10.00p Kaivan, Jorge 4 hours
+4/5 2:00pm-6:30pm Charles, Rebecca, and Jasmine, 3 1/2 hours
 Driver Order and Time Length:
-Jorge, 30 minutes
-Kaivan, 30 minutes
-Jorge, 30 minutes
-Kaivan, 30 minutes
-Jorge, 30 minutes
-Kaivan, 30 minutes
-Jorge, 30 minutes
-Kaivan, 30 minutes
+Jasmine, 30 minutes
+Charles, 30 minutes
+Rebecca, 30 minutes
+Jasmine, 30 minutes
+Charles, 30 minutes
+Rebecca, 30 minutes
+Jasmine, 30 minutes
 
-2/17, 6.00p - 10.30p Kaivan, Jorge 4.30 hours
+4/6 3:00pm-7:00pm Jorge, Charles, Rebecca, and Jasmine, 4 hours
 Driver Order and Time Length:
-Kaivan, 30 minutes
-Jorge, 30 minutes
-Kaivan, 30 minutes
-Jorge, 30 minutes
-Kaivan, 30 minutes
-Jorge, 30 minutes
-Kaivan, 30 minutes
-Jorge, 30 minutes
-Kaivan, 30 minutes
+Rebecca, 30 minutes
+Charles, 30 minutes
+Jasmine, 30 minutes
+Jorge,   30 minutes
+Charles, 30 minutes
+Jasmine, 30 minutes
+Rebecca, 30 minutes
+Jorge,   30 minutes
 
-2/18, 6.30p - 9.00p Kaivan, Jorge 3.30 hours
+4/7 3:00pm-8:00pm Jorge, Charles, Rebecca, and Jasmine, 5 hours
 Driver Order and Time Length:
-Jorge, 30 minutes
-Kaivan, 30 minutes
-Jorge, 30 minutes
-Kaivan, 30 minutes
-Jorge, 30 minutes
-Kaivan, 30 minutes
-Jorge, 30 minutes
-Kaivan, 30 minutes
+Charles, 30 minutes
+Rebecca, 30 minutes
+Jorge,   30 minutes
+Jasmine, 30 minutes
+Charles, 30 minutes
+Rebecca, 30 minutes
+Jorge,   30 minutes
+Jasmine, 30 minutes
+Charles, 30 minutes
+Jorge,   30 minutes
 
-2/19, 6.00p - 10.30p Kaivan, Jorge 4.00 hours
+4/8 2:30pm-7:00pm Charles, Rebecca, and Jasmine, Jorge  4 1/2 hours
 Driver Order and Time Length:
-Kaivan, 30 minutes
-Jorge, 30 minutes
-Kaivan, 30 minutes
-Jorge, 30 minutes
-Kaivan, 30 minutes
-Jorge, 30 minutes
-Kaivan, 30 minutes
-Jorge, 30 minutes
+Jasmine, 30 minutes
+Charles, 30 minutes
+Rebecca, 30 minutes
+Jasmine, 30 minutes
+Charles, 30 minutes
+Rebecca, 30 minutes
+Jasmine, 30 minutes
+Jorge,   30 minutes
+Charles, 30 minutes
 
-2/20, 5.00p - 12.00p Kaivan, Jorge 7.00 hours
+4/9 3:30pm-8:30pm Jorge, Charles, Rebecca, and Jasmine, 4 1/2 hours
 Driver Order and Time Length:
-Jorge, 30 minutes
-Kaivan, 30 minutes
-Jorge, 30 minutes
-Kaivan, 30 minutes
-Jorge, 30 minutes
-Kaivan, 30 minutes
-Jorge, 30 minutes
-Kaivan, 30 minutes
-Jorge, 30 minutes
-Kaivan, 30 minutes
-Jorge, 30 minutes
-Kaivan, 30 minutes
-Jorge, 30 minutes
-Kaivan, 30 minutes
+Rebecca, 30 minutes
+Charles, 30 minutes
+Jasmine, 30 minutes
+Rebecca, 30 minutes
+Jorge,   30 minutes
+Charles, 30 minutes
+Jasmine, 30 minutes
+Rebecca, 30 minutes
+Jorge,   30 minutes
 
-
-2/25, 5.30p - 10.00p Kaivan, Jorge 4.30 hours
+4/10 2:00pm-6:30pm Jorge, Charles, Rebecca, and Jasmine, 4 1/2 hours
 Driver Order and Time Length:
-Jorge, 30 minutes
-Kaivan, 30 minutes
-Jorge, 30 minutes
-Kaivan, 30 minutes
-Jorge, 30 minutes
-Kaivan, 30 minutes
-Jorge, 30 minutes
-Kaivan, 30 minutes
-Jorge, 30 minutes
+Charles, 30 minutes
+Rebecca, 30 minutes
+Jasmine, 30 minutes
+Jorge,   30 minutes
+Charles, 30 minutes
+Rebecca, 30 minutes
+Jasmine, 30 minutes
+Jorge,   30 minutes
+Charles, 30 minutes
 
-2/26, 4.30p - 10.00p Kaivan, Jorge 5.30 hours
+
+4/11 2:00pm-6:30pm Jorge, Charles, Rebecca, and Jasmine, 4 1/2 hours
 Driver Order and Time Length:
-Kaivan, 30 minutes
-Jorge, 30 minutes
-Kaivan, 30 minutes
-Jorge, 30 minutes
-Kaivan, 30 minutes
-Jorge, 30 minutes
-Kaivan, 30 minutes
-Kaivan, 30 minutes
-Jorge, 30 minutes
-Kaivan, 30 minutes
-Jorge, 30 minutes
+Charles, 30 minutes
+Rebecca, 30 minutes
+Jasmine, 30 minutes
+Jorge,   30 minutes
+Charles, 30 minutes
+Rebecca, 30 minutes
+Jasmine, 30 minutes
+Jorge,   30 minutes
+Charles, 30 minutes
+
+4/12 3:00pm-7:30pm Jorge, Charles, Rebecca, and Jasmine, 4 1/2 hours
+Driver Order and Time Length:
+Rebecca, 30 minutes
+Jorge,   30 minutes
+Charles, 30 minutes
+Jasmine, 30 minutes
+Rebecca, 30 minutes
+Charles, 30 minutes
+Jorge,   30 minutes
+Jasmine, 30 minutes
+Rebecca, 30 minutes
+
+4/13 3:00pm-6:00pm Jorge, Charles, Rebecca, and Jasmine, 3 hours
+Driver Order and Time Length:
+Rebecca, 30 minutes
+Jorge,   30 minutes
+Charles, 30 minutes
+Jasmine, 30 minutes
+Rebecca, 30 minutes
+Charles, 30 minutes
+
+4/14 3:00pm-6:00pm Jorge, Charles, Rebecca, and Jasmine, 3 hours
+Driver Order and Time Length:
+Charles, 30 minutes
+Jorge,   30 minutes
+Jasmine, 30 minutes
+Jorge,   30 minutes
+Rebecca, 30 minutes
+Jasmine, 30 minutes
+
+4/15 3:30pm-8:30pm Jorge, Charles, Rebecca, and Jasmine, 4 1/2 hours
+Driver Order and Time Length:
+Rebecca, 30 minutes
+Charles, 30 minutes
+Jasmine, 30 minutes
+Rebecca, 30 minutes
+Jorge,   30 minutes
+Charles, 30 minutes
+Jasmine, 30 minutes
+Rebecca, 30 minutes
+Jorge,   30 minutes
+
+4/17 2:00pm-6:30pm Jorge, Charles, Rebecca, and Jasmine, 2 hours
+Driver Order and Time Length:
+Charles, 30 minutes
+Rebecca, 30 minutes
+Jasmine, 30 minutes
+Jorge,   30 minutes

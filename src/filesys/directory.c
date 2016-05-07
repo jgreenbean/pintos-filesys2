@@ -108,8 +108,6 @@ lookup (const struct dir *dir, const char *name,
 
   for (ofs = 0; inode_read_at (dir->inode, &e, sizeof e, ofs) == sizeof e;
        ofs += sizeof e) {
-    // printf("name: %s, entry name: %s, entry sector: %d, dir sector: %d\n", name, e.name, e.inode_sector, inode_get_inumber(dir->inode));
-
     if (e.in_use && !strcmp (name, e.name)) 
       {
         if (ep != NULL)
@@ -187,7 +185,6 @@ dir_add (struct dir *dir, const char *name, block_sector_t inode_sector, bool is
   // printf("dir add name: %s\n", name);
 
   success = inode_write_at (dir->inode, &e, sizeof e, ofs) == sizeof e;
-  // printf("dir add name: %s, success: %d\n", name, success);
 
  done:
   return success;
@@ -216,7 +213,6 @@ dir_remove (struct dir *dir, const char *name)
   if (inode == NULL)
     goto done;
 
-  // printf("dir remove name: %s, sector: %d\n", name, e.inode_sector);
   if(e.is_dir) {
     struct dir_entry e_entry;
     off_t e_pos = 0;

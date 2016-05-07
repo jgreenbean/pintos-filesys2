@@ -143,8 +143,7 @@ struct thread
     struct list zombies;                /*Dead children*/
     int fd_cnt;                         /*File descriptor counter*/
     struct list open_files;             /*List of all files opened by this thread*/
-    // char* cur_dir;                      /*Each process has its own current directory*/
-    struct dir* cur_dir;
+    struct dir* cur_dir;                /*Each process has its own current directory*/
 
     /* For child threads */
     struct thread *parent_process;      /*The parent process that created this thread.*/
